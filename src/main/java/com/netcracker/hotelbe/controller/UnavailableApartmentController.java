@@ -2,79 +2,60 @@ package com.netcracker.hotelbe.controller;
 
 import com.netcracker.hotelbe.entity.UnavailableApartment;
 import com.netcracker.hotelbe.service.UnavailableApartmentService;
+import com.netcracker.hotelbe.utils.CustomEntityLogMessage;
+import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-@RestController
-@RequestMapping("unavailable-apartment")
-public class UnavailableApartmentController {
-    private final static Logger logger = Logger.getLogger(UnavailableApartmentController.class);
-    private final static String UNAVAILABLE_APARTMENT_BY_ID_NOT_FOUND = "Unavailable apartment by id: %d not found!";
+import java.util.List;
 
+@RestController
+@RequestMapping("/unavailableApartments")
+public class UnavailableApartmentController {
+    private static Logger logger = LogManager.getLogger(UnavailableApartmentController.class);
+    private final static String ENTITY_NAME = UnavailableApartment.class.getSimpleName();
 
     @Autowired
-    UnavailableApartmentService unavailableApartmentService;
+    private UnavailableApartmentService unavailableApartmentService;
 
-    @GetMapping("/all")
-    public ResponseEntity getAll() {
-        logger.info("Request for get all unavailable apartment");
+    @GetMapping
+    public ResponseEntity<List<UnavailableApartment>> getAll() {
+        logger.info(String.format(CustomEntityLogMessage.REQUEST_FOR_GET_ALL_ENTITY, ENTITY_NAME));
 
-        return new ResponseEntity(unavailableApartmentService.getAll(), HttpStatus.OK);
+        return new ResponseEntity<>(unavailableApartmentService.getAll(), HttpStatus.OK);
     }
 
-    @PostMapping("/{apartmentId}")
-    public ResponseEntity create(@RequestBody UnavailableApartment unavailableApartment,
-                                 @PathVariable Long apartmentId) {
-        logger.info("Request for create unavailable apartment with apartmentId: " + apartmentId);
+    @GetMapping("/{id}")
+    public ResponseEntity<UnavailableApartment> getById(@PathVariable("id") final Long id) {
+        logger.info(String.format(CustomEntityLogMessage.REQUEST_FOR_GET_ENTITY_BY_ID, ENTITY_NAME, id));
 
-        return new ResponseEntity(unavailableApartmentService.save(unavailableApartment, apartmentId),
-                HttpStatus.CREATED);
+        return new ResponseEntity(unavailableApartmentService.findById(id), HttpStatus.OK);
     }
 
-    @GetMapping("{id}")
-    public ResponseEntity getById(@PathVariable Long id) {
-        logger.info("Request for get unavailable apartment by id: " + id);
+    @PostMapping
+    public ResponseEntity<Long> create(@RequestBody UnavailableApartment unavailableApartment) {
+        logger.info(String.format(CustomEntityLogMessage.REQUEST_FOR_CREATE_ENTITY, ENTITY_NAME));
 
-        UnavailableApartment unavailableApartment = unavailableApartmentService.findById(id);
-        if (unavailableApartment != null) {
-            return new ResponseEntity(unavailableApartment, HttpStatus.OK);
-        } else {
-            logger.warn(String.format(UNAVAILABLE_APARTMENT_BY_ID_NOT_FOUND, id));
-
-            return new ResponseEntity(HttpStatus.BAD_REQUEST);
-        }
+        return new ResponseEntity<>(unavailableApartmentService.save(unavailableApartment), HttpStatus.CREATED);
     }
 
-    @PutMapping("{apartmentId}")
-    public ResponseEntity update(@RequestBody UnavailableApartment unavailableApartment,
-                                 @PathVariable Long apartmentId) {
-        logger.info("Request for update unavailable apartment by id: " + unavailableApartment.getId() + " and apartmentId: " + apartmentId);
 
-        boolean update = unavailableApartmentService.update(unavailableApartment, apartmentId);
+    @PutMapping("/{id}")
+    public ResponseEntity<Long> update(@RequestBody UnavailableApartment unavailableApartment, @PathVariable("id") final Long id) {
+        logger.info(String.format(CustomEntityLogMessage.REQUEST_FOR_UPDATE_ENTITY_BY_ID, ENTITY_NAME, unavailableApartment.getId()));
 
-        if (update) {
-            return new ResponseEntity(HttpStatus.OK);
-        } else {
-            logger.warn("Unavailable apartment by id: " + unavailableApartment.getId() + " and apartmentId: " + apartmentId + " not found!");
-
-            return new ResponseEntity(HttpStatus.BAD_REQUEST);
-        }
+        return new ResponseEntity<>(unavailableApartmentService.update(unavailableApartment, id), HttpStatus.OK);
     }
 
-    @DeleteMapping("{id}")
-    public ResponseEntity deleteById(@PathVariable Long id) {
-        logger.info("Request for delete unavailable apartment by id: " +id);
+    @DeleteMapping("/{id}")
+    public ResponseEntity deleteById(@PathVariable("id") final Long id) {
+        logger.info(String.format(CustomEntityLogMessage.REQUEST_FOR_DELETE_ENTITY_BY_ID, ENTITY_NAME, id));
 
-        boolean delete = unavailableApartmentService.deleteById(id);
-        if (delete) {
-            return new ResponseEntity(HttpStatus.OK);
-        } else {
-            logger.warn(String.format(UNAVAILABLE_APARTMENT_BY_ID_NOT_FOUND, id));
+        unavailableApartmentService.deleteById(id);
 
-            return new ResponseEntity(HttpStatus.BAD_REQUEST);
-        }
+        return new ResponseEntity(HttpStatus.OK);
     }
 }

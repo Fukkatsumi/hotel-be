@@ -9,5 +9,6 @@ import java.util.Optional;
 public interface ApartmentPriceRepository extends JpaRepository<ApartmentPrice, Long> {
 
     @Transactional(readOnly = true)
+    @Override
     Optional<ApartmentPrice> findById(Long id);
 }

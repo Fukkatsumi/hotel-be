@@ -4,18 +4,19 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.netcracker.hotelbe.entity.enums.ApartmentStatus;
 import com.netcracker.hotelbe.utils.PostgreSQLEnumType;
+import lombok.Data;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 
 import javax.persistence.*;
-import javax.persistence.UniqueConstraint;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.util.List;
 
+@Data
 @Entity
 @Table(name = "Apartments",
-        uniqueConstraints = {@UniqueConstraint(columnNames = {"id"})})
+        uniqueConstraints = {@UniqueConstraint(columnNames = {"id", "room_number"})})
 @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 @TypeDef(
         name = "pgsql_enum",
@@ -49,88 +50,10 @@ public class Apartment implements Serializable {
 
     @JsonIgnore
     @OneToMany(mappedBy = "apartment", fetch = FetchType.LAZY)
-    private List<ApartmentPrice> apartmentPrices;
+    private List<UnavailableApartment> unavailableApartments;
 
     @JsonIgnore
     @OneToMany(mappedBy = "apartment", fetch = FetchType.LAZY)
-    private List<UnavailableApartment> unavailableApartments;
+    private List<Booking> bookings;
 
-    public Apartment() {
-    }
-
-    public Apartment(int roomNumber, String photo, String description, ApartmentStatus status,
-                     ApartmentClass apartmentClass, List<ApartmentPrice> apartmentPrices,
-                     List<UnavailableApartment> unavailableApartments) {
-        this.roomNumber = roomNumber;
-        this.photo = photo;
-        this.description = description;
-        this.status = status;
-        this.apartmentClass = apartmentClass;
-        this.apartmentPrices = apartmentPrices;
-        this.unavailableApartments = unavailableApartments;
-    }
-
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
-
-    public int getRoomNumber() {
-        return roomNumber;
-    }
-
-    public void setRoomNumber(int roomNumber) {
-        this.roomNumber = roomNumber;
-    }
-
-    public String getPhoto() {
-        return photo;
-    }
-
-    public void setPhoto(String photo) {
-        this.photo = photo;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public ApartmentStatus getStatus() {
-        return status;
-    }
-
-    public void setStatus(ApartmentStatus status) {
-        this.status = status;
-    }
-
-    public ApartmentClass getApartmentClass() {
-        return apartmentClass;
-    }
-
-    public void setApartmentClass(ApartmentClass apartmentClass) {
-        this.apartmentClass = apartmentClass;
-    }
-
-    public List<ApartmentPrice> getApartmentPrices() {
-        return apartmentPrices;
-    }
-
-    public void setApartmentPrices(List<ApartmentPrice> apartmentPrices) {
-        this.apartmentPrices = apartmentPrices;
-    }
-
-    public List<UnavailableApartment> getUnavailableApartments() {
-        return unavailableApartments;
-    }
-
-    public void setUnavailableApartments(List<UnavailableApartment> unavailableApartments) {
-        this.unavailableApartments = unavailableApartments;
-    }
 }

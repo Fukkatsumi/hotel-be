@@ -8,8 +8,7 @@ public enum StaffSpeciality implements Serializable {
     Cleaner("Cleaner"),
     Handyman("Handyman"),
     Manager("Manager"),
-    //TODO rename Hotel Administrator in DB to Hotel_Administrator
-    Hotel_Administrator("Hotel Administrator");
+    Hotel_Administrator("Hotel_Administrator");
 
     private String fullName;
 

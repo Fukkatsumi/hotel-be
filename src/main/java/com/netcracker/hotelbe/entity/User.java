@@ -1,6 +1,7 @@
 package com.netcracker.hotelbe.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.netcracker.hotelbe.entity.enums.UserRole;
 import lombok.Data;
 import org.hibernate.annotations.Type;
@@ -10,6 +11,7 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Pattern;
 import javax.validation.constraints.Size;
+import java.util.List;
 
 @Entity
 @Table(name = "users")
@@ -63,5 +65,9 @@ public class User {
     @JsonBackReference
     @OneToOne(cascade = CascadeType.ALL, mappedBy = "user")
     private Staff staff;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "user", fetch = FetchType.LAZY)
+    private List<Booking> bookings;
 
 }

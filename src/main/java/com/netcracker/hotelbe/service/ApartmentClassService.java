@@ -2,71 +2,78 @@ package com.netcracker.hotelbe.service;
 
 import com.netcracker.hotelbe.entity.ApartmentClass;
 import com.netcracker.hotelbe.repository.ApartmentClassRepository;
+import com.netcracker.hotelbe.utils.CustomEntityLogMessage;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.persistence.EntityNotFoundException;
 import java.util.List;
-import java.util.NoSuchElementException;
 
 @Service
 public class ApartmentClassService {
+    private static Logger logger = LogManager.getLogger(ApartmentClassService.class);
+    private final static String ENTITY_NAME = ApartmentClass.class.getSimpleName();
 
     @Autowired
-    ApartmentClassRepository apartmentClassRepository;
+    private ApartmentClassRepository apartmentClassRepository;
 
-    public List<ApartmentClass> getAll(){
-        return apartmentClassRepository.findAll();
+
+    public List<ApartmentClass> findAll() {
+        logger.trace(String.format(CustomEntityLogMessage.FIND_ALL_ENTITY, ENTITY_NAME));
+
+        final List<ApartmentClass> apartmentClasses = apartmentClassRepository.findAll();
+        logger.info(String.format(CustomEntityLogMessage.FOUND_AMOUNT_ELEMENT, apartmentClasses.size()));
+
+        return apartmentClasses;
     }
 
-    public Long save(ApartmentClass apartmentClass) {
-        ApartmentClass save = apartmentClassRepository.save(apartmentClass);
+    public Long save(final ApartmentClass apartmentClass) {
+        logger.trace(String.format(CustomEntityLogMessage.SAVE_ENTITY, ENTITY_NAME));
 
-        return save.getId();
+        final ApartmentClass save = apartmentClassRepository.save(apartmentClass);
+        final Long id = save.getId();
+        logger.trace(String.format(CustomEntityLogMessage.SAVE_ENTITY_WITH_ID, ENTITY_NAME, id));
+
+        return id;
     }
 
-    public ApartmentClass findById(Long id) {
+    public ApartmentClass findById(final Long id) {
+        logger.trace(String.format(CustomEntityLogMessage.FIND_ENTITY_BY_ID, ENTITY_NAME, id));
 
-        try {
-            return apartmentClassRepository.findById(id).get();
-        } catch (NoSuchElementException e) {
-            return null;
-        }
+        return apartmentClassRepository.findById(id).orElseThrow(
+                () -> new EntityNotFoundException(String.valueOf(id))
+        );
     }
 
-    public boolean update(ApartmentClass apartmentClass) {
-        ApartmentClass update;
+    public Long update(final ApartmentClass apartmentClass, final Long id) {
+        logger.trace(String.format(CustomEntityLogMessage.UPDATE_ENTITY, ENTITY_NAME));
 
-        try {
-            update = apartmentClassRepository.findById(apartmentClass.getId()).get();
-        } catch (NoSuchElementException e) {
-            return false;
-        }
+        ApartmentClass update = apartmentClassRepository.findById(id).orElseThrow(
+                () -> new EntityNotFoundException(String.valueOf(id))
+        );
+        logger.trace(String.format(CustomEntityLogMessage.FOUND_ENTITY_WITH_ID, ENTITY_NAME, id));
 
-        update.setId(apartmentClass.getId());
         update.setNameClass(apartmentClass.getNameClass());
         update.setNumberOfRooms(apartmentClass.getNumberOfRooms());
         update.setNumberOfCouchette(apartmentClass.getNumberOfCouchette());
 
-        apartmentClassRepository.save(update);
+        update = apartmentClassRepository.save(update);
+        logger.trace(String.format(CustomEntityLogMessage.UPDATED_ENTITY_SAVED, ENTITY_NAME));
 
-        return true;
+        return update.getId();
     }
 
-    public boolean deleteById(Long id) {
-        ApartmentClass delete;
-        try {
-            delete = apartmentClassRepository.findById(id).get();
-        } catch (NoSuchElementException e) {
-            return false;
-        }
+    public void deleteById(final Long id) {
+        logger.trace(String.format(CustomEntityLogMessage.DELETE_ENTITY_BY_ID, ENTITY_NAME, id));
+
+        ApartmentClass delete = apartmentClassRepository.findById(id).orElseThrow(
+                () -> new EntityNotFoundException(String.valueOf(id))
+        );
+        logger.trace(String.format(CustomEntityLogMessage.FOUND_ENTITY_FOR_DELETE, ENTITY_NAME));
 
         apartmentClassRepository.delete(delete);
-
-        return true;
+        logger.trace(String.format(CustomEntityLogMessage.ENTITY_DELETED, ENTITY_NAME));
     }
-
-    public ApartmentClass getOne(Long id){
-        return apartmentClassRepository.getOne(id);
-    }
-
 }

@@ -1,11 +1,14 @@
 package com.netcracker.hotelbe.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.Data;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
-import java.util.Date;
+import java.sql.Timestamp;
 
+@Data
 @Entity
 @Table(name = "UnavailableApartments",
         uniqueConstraints = {@UniqueConstraint(columnNames = {"id"})})
@@ -18,13 +21,13 @@ public class UnavailableApartment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "start_date")
-    private Date startDate;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Timestamp startDate;
 
-    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "end_date")
-    private Date endDate;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Timestamp endDate;
 
     @Column(name = "cause_description")
     private String causeDescription;
@@ -33,54 +36,4 @@ public class UnavailableApartment {
     @JoinColumn(name = "id_apartment")
     private Apartment apartment;
 
-    public UnavailableApartment() {
-    }
-
-    public UnavailableApartment(long id, Date startDate, Date endDate, String causeDescription, Apartment apartment) {
-        this.id = id;
-        this.startDate = startDate;
-        this.endDate = endDate;
-        this.causeDescription = causeDescription;
-        this.apartment = apartment;
-    }
-
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
-
-    public Date getStartDate() {
-        return startDate;
-    }
-
-    public void setStartDate(Date startDate) {
-        this.startDate = startDate;
-    }
-
-    public Date getEndDate() {
-        return endDate;
-    }
-
-    public void setEndDate(Date endDate) {
-        this.endDate = endDate;
-    }
-
-    public String getCauseDescription() {
-        return causeDescription;
-    }
-
-    public void setCauseDescription(String causeDescription) {
-        this.causeDescription = causeDescription;
-    }
-
-    public Apartment getApartment() {
-        return apartment;
-    }
-
-    public void setApartment(Apartment apartment) {
-        this.apartment = apartment;
-    }
 }

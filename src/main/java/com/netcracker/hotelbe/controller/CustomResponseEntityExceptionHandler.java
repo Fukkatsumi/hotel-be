@@ -1,6 +1,12 @@
 package com.netcracker.hotelbe.controller;
 
 
+import com.google.common.base.Throwables;
+import com.sun.javafx.binding.StringFormatter;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+import org.apache.log4j.Priority;
+import org.postgresql.util.PSQLException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,6 +23,9 @@ import java.util.stream.Collectors;
 
 @ControllerAdvice
 public class CustomResponseEntityExceptionHandler extends ResponseEntityExceptionHandler {
+    private static Logger logger = LogManager.getLogger("CustomResponseEntityException");
+    private static String NOT_FOUND_ENTITY_WITH_ID = "No entity with id = %s found";
+
     @Override
     protected ResponseEntity<Object> handleMethodArgumentNotValid(MethodArgumentNotValidException ex, HttpHeaders headers, HttpStatus status, WebRequest request) {
         List<ObjectError> fieldErrors = ex.getBindingResult().getAllErrors();
@@ -25,7 +34,25 @@ public class CustomResponseEntityExceptionHandler extends ResponseEntityExceptio
     }
 
     @ExceptionHandler(value = {EntityNotFoundException.class})
-    protected ResponseEntity<Object> handleEntityNotFoundException (EntityNotFoundException ex) {
-        return new ResponseEntity<>(ex.getMessage(), HttpStatus.NOT_FOUND);
+    protected ResponseEntity<Object> handleEntityNotFoundException(EntityNotFoundException ex) {
+        final String message = String.format(NOT_FOUND_ENTITY_WITH_ID, ex.getMessage());
+        logger.warn(message);
+
+        return new ResponseEntity<>(message, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(value = {RuntimeException.class})
+    protected ResponseEntity<Object> handlePSQLException(RuntimeException runtimeException) {
+        Throwable rootCause = Throwables.getRootCause(runtimeException);
+        String logMessage;
+        String responseMessage = runtimeException.getMessage();
+        if (rootCause instanceof PSQLException) {
+            logMessage = rootCause.getMessage();
+            responseMessage = logMessage.split("Detail: ")[1];
+            if (logger.isEnabledFor(Priority.ERROR)) {
+                logger.error(logMessage);
+            }
+        }
+        return new ResponseEntity<>(responseMessage, HttpStatus.BAD_REQUEST);
     }
 }

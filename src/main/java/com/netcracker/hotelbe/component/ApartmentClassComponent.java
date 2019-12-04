@@ -11,9 +11,9 @@ import java.util.List;
 public class ApartmentClassComponent {
 
     @Autowired
-    ApartmentClassService apartmentClassService;
+    private ApartmentClassService apartmentClassService;
 
     public List<ApartmentClass> getAll(){
-       return apartmentClassService.getAll();
+       return apartmentClassService.findAll();
     }
 }

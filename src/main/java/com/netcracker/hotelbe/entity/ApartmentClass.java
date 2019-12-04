@@ -2,14 +2,15 @@ package com.netcracker.hotelbe.entity;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.Data;
 
 import javax.persistence.*;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
+@Data
 @Entity
 @Table(name = "ApartmentClass",
         uniqueConstraints = {@UniqueConstraint(columnNames = {"id"})})
@@ -26,61 +27,22 @@ public class ApartmentClass implements Serializable {
     private String nameClass;
 
     @Column(name = "number_of_rooms")
+    @Min(value = 1, message = "Number of rooms cant be less then 1")
     private int numberOfRooms;
 
     @Column(name = "number_of_couchette")
+    @Min(value = 1, message = "Number of couchette cant be less then 1")
     private int numberOfCouchette;
 
     @JsonIgnore
     @OneToMany(mappedBy = "apartmentClass", fetch = FetchType.LAZY)
     private List<Apartment> apartments;
 
-    public ApartmentClass() {
-    }
+    @JsonIgnore
+    @OneToMany(mappedBy = "apartmentClass", fetch = FetchType.LAZY)
+    private List<ApartmentPrice> apartmentPrices;
 
-    public ApartmentClass(String nameClass, int numberOfRooms, int numberOfCouchette) {
-        this.nameClass = nameClass;
-        this.numberOfRooms = numberOfRooms;
-        this.numberOfCouchette = numberOfCouchette;
-    }
-
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
-
-    public String getNameClass() {
-        return nameClass;
-    }
-
-    public void setNameClass(String nameClass) {
-        this.nameClass = nameClass;
-    }
-
-    public int getNumberOfRooms() {
-        return numberOfRooms;
-    }
-
-    public void setNumberOfRooms(int numberOfRooms) {
-        this.numberOfRooms = numberOfRooms;
-    }
-
-    public int getNumberOfCouchette() {
-        return numberOfCouchette;
-    }
-
-    public void setNumberOfCouchette(int numberOfCouchette) {
-        this.numberOfCouchette = numberOfCouchette;
-    }
-
-    public List<Apartment> getApartments() {
-        return apartments;
-    }
-
-    public void setApartments(List<Apartment> apartments) {
-        this.apartments = apartments;
-    }
+    @JsonIgnore
+    @OneToMany(mappedBy = "apartmentClass", fetch = FetchType.LAZY)
+    private List<Booking> bookings;
 }

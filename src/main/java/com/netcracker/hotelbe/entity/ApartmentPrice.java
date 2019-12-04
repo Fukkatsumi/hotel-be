@@ -1,12 +1,16 @@
 package com.netcracker.hotelbe.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import lombok.Data;
 
 import javax.persistence.*;
+import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
-import java.util.Date;
+import java.sql.Timestamp;
 
+@Data
 @Entity
 @Table(name = "ApartmentPrices",
         uniqueConstraints = {@UniqueConstraint(columnNames = {"id"})})
@@ -20,67 +24,19 @@ public class ApartmentPrice implements Serializable {
     private long id;
 
     @Column(name = "price")
+    @Min(value = 0, message = "Price cant be less then 0")
     private int price;
 
-    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "start_period")
-    private Date startPeriod;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Timestamp startPeriod;
 
-    @Temporal(TemporalType.TIMESTAMP)
     @Column(name = "end_period")
-    private Date endPeriod;
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private Timestamp endPeriod;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "apartment_id")
-    private Apartment apartment;
+    private ApartmentClass apartmentClass;
 
-    public ApartmentPrice() {
-    }
-
-    public ApartmentPrice(int price, Date startPeriod, Date endPeriod, Apartment apartment) {
-        this.price = price;
-        this.startPeriod = startPeriod;
-        this.endPeriod = endPeriod;
-        this.apartment = apartment;
-    }
-
-    public long getId() {
-        return id;
-    }
-
-    public void setId(long id) {
-        this.id = id;
-    }
-
-    public int getPrice() {
-        return price;
-    }
-
-    public void setPrice(int price) {
-        this.price = price;
-    }
-
-    public Date getStartPeriod() {
-        return startPeriod;
-    }
-
-    public void setStartPeriod(Date startPeriod) {
-        this.startPeriod = startPeriod;
-    }
-
-    public Date getEndPeriod() {
-        return endPeriod;
-    }
-
-    public void setEndPeriod(Date endPeriod) {
-        this.endPeriod = endPeriod;
-    }
-
-    public Apartment getApartment() {
-        return apartment;
-    }
-
-    public void setApartment(Apartment apartment) {
-        this.apartment = apartment;
-    }
 }

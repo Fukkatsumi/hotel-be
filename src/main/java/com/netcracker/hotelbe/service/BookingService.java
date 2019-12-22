@@ -46,25 +46,19 @@ public class BookingService {
 
     public Booking update(Booking booking, Long id) {
 
-        Booking update = bookingRepository.findById(id).orElseThrow(
+        bookingRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException(String.valueOf(id))
         );
 
         ApartmentClass apartmentClass = apartmentClassService.findById(booking.getApartmentClass().getId());
-        booking.setApartmentClass(apartmentClass);
-        User user = userService.findById(booking.getUser().getId());
-        booking.setUser(user);
 
-        update.setId(booking.getId());
-        update.setBookingStatus(booking.getBookingStatus());
-        update.setComment(booking.getComment());
-        update.setCreatedDate(booking.getCreatedDate());
-        update.setStartDate(booking.getStartDate());
-        update.setEndDate(booking.getEndDate());
-        update.setReview(booking.getReview());
-        update.setTotalPrice(booking.getTotalPrice());
-        update.setApartment(booking.getApartment());
-        return bookingRepository.save(update);
+        User user = userService.findById(booking.getUser().getId());
+
+        booking.setApartmentClass(apartmentClass);
+        booking.setUser(user);
+        booking.setId(id);
+
+        return bookingRepository.save(booking);
     }
 
     public void deleteById(Long id) {

@@ -41,9 +41,9 @@ public class UserController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Long> updateUser(@Valid @RequestBody User user, @PathVariable("id") Long id) {
-        user.setId(id);
+
         try {
-            return new ResponseEntity<>(userService.save(user).getId(), HttpStatus.OK);
+            return new ResponseEntity<>(userService.update(user, id).getId(), HttpStatus.OK);
         } catch (RuntimeException e) {
             return RuntimeExceptionHandler.handlePSQLException(e);
         }

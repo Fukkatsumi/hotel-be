@@ -36,8 +36,8 @@ public class ApartmentClassValidator implements Validator {
 
         ApartmentClass apartmentClass = (ApartmentClass) o;
 
-        if (apartmentClassService.findByFields(apartmentClass.getNameClass(),
-                apartmentClass.getNumberOfCouchette(), apartmentClass.getNumberOfRooms()).equals(apartmentClass)) {
+        if (apartmentClass.equals(apartmentClassService.findByFields(apartmentClass.getNameClass(),
+                apartmentClass.getNumberOfCouchette(), apartmentClass.getNumberOfRooms()))) {
             errors.rejectValue("", "", "This apartment class already exist!");
         }
 

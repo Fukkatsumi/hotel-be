@@ -14,22 +14,36 @@ public class StaffService {
     @Autowired
     private StaffRepository staffRepository;
 
-    public Staff findById(long id){
+    @Autowired
+    private UserService userService;
+
+    public Staff findById(long id) {
         return staffRepository.findById(id).orElseThrow(
-                ()->new EntityNotFoundException(String.valueOf(id))
+                () -> new EntityNotFoundException(String.valueOf(id))
         );
     }
 
-    public List<Staff> findAll(){
+    public List<Staff> findAll() {
         return staffRepository.findAll();
     }
 
-    public Staff save(Staff staff){
+    public Staff save(Staff staff) {
         return staffRepository.save(staff);
     }
 
-    public void deleteById(Long id){
-        if (!staffRepository.findById(id).isPresent()){
+    public Staff update(Staff staff, Long id) {
+        staffRepository.findById(id).orElseThrow(
+                () -> new EntityNotFoundException(String.valueOf(id))
+        );
+
+        staff.setUser(userService.findById(id));
+        staff.setId(id);
+
+        return staffRepository.save(staff);
+    }
+
+    public void deleteById(Long id) {
+        if (!staffRepository.findById(id).isPresent()) {
             throw new EntityNotFoundException(String.valueOf(id));
         }
         staffRepository.setStatusById(false, id);

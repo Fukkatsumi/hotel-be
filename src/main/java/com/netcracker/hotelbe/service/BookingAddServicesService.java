@@ -28,6 +28,18 @@ public class BookingAddServicesService {
         return bookingAddServicesRepository.save(bookingAddServices);
     }
 
+    public BookingAddServices update(BookingAddServices bookingAddServices, Long id) {
+
+        BookingAddServices update = bookingAddServicesRepository.findById(id).orElseThrow(
+                () -> new EntityNotFoundException(String.valueOf(id))
+        );
+
+        update.setServiceName(bookingAddServices.getServiceName());
+        update.setPrice(bookingAddServices.getPrice());
+
+        return bookingAddServicesRepository.save(update);
+    }
+
     public void deleteById(Long id){
         BookingAddServices delete = bookingAddServicesRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException(String.valueOf(id))

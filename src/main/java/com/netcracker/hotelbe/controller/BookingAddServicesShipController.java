@@ -41,9 +41,8 @@ public class BookingAddServicesShipController {
 
     @PutMapping("/{id}")
     public ResponseEntity<BookingAddServicesShip> updateBookingAddServiceShip(@RequestBody @Valid BookingAddServicesShip bookingAddServicesShip, @PathVariable Long id) {
-        bookingAddServicesShip.setId(id);
         try {
-            return new ResponseEntity<>(bookingAddServicesShipService.save(bookingAddServicesShip), HttpStatus.OK);
+            return new ResponseEntity<>(bookingAddServicesShipService.update(bookingAddServicesShip, id), HttpStatus.OK);
         } catch (RuntimeException e) {
             return RuntimeExceptionHandler.handlePSQLException(e);
         }

@@ -35,20 +35,17 @@ public class ApartmentService {
         );
     }
 
-    public Apartment update(final Apartment apartment, final Long id) {
-        final ApartmentClass apartmentClass = apartmentClassService.findById(apartment.getApartmentClass().getId());
-
-        Apartment update = apartmentRepository.findById(id).orElseThrow(
+    public Apartment update(Apartment apartment, final Long id) {
+        apartmentRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException(String.valueOf(id))
         );
 
-        update.setRoomNumber(apartment.getRoomNumber());
-        update.setPhoto(apartment.getPhoto());
-        update.setDescription(apartment.getDescription());
-        update.setStatus(apartment.getStatus());
-        update.setApartmentClass(apartmentClass);
+        final ApartmentClass apartmentClass = apartmentClassService.findById(apartment.getApartmentClass().getId());
 
-        return apartmentRepository.save(update);
+        apartment.setApartmentClass(apartmentClass);
+        apartment.setId(id);
+
+        return apartmentRepository.save(apartment);
     }
 
     public void deleteById(final Long id) {

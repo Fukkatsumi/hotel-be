@@ -20,13 +20,13 @@ public class UserService {
 
     public User findById(Long id){
         return userRepository.findById(id).orElseThrow(
-                ()->new EntityNotFoundException("No entity with id=" + id + " found")
+                ()->new EntityNotFoundException(String.valueOf(id))
         );
     }
 
     public void deleteById(Long id){
         if (!userRepository.findById(id).isPresent()){
-            throw new EntityNotFoundException("No entity with id=" + id + " found");
+            throw new EntityNotFoundException(String.valueOf(id));
         }
         userRepository.deleteById(id);
     }
@@ -35,5 +35,13 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    public User update(User user, Long id){
+        userRepository.findById(id).orElseThrow(
+                () -> new EntityNotFoundException(String.valueOf(id))
+        );
 
+        user.setId(id);
+
+        return userRepository.save(user);
+    }
 }

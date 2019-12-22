@@ -44,17 +44,16 @@ public class UnavailableApartmentService {
     }
 
     public UnavailableApartment update(final UnavailableApartment unavailableApartment, final Long id) {
-        final Apartment apartment = apartmentService.findById(unavailableApartment.getApartment().getId());
-        UnavailableApartment update = unavailableApartmentRepository.findById(id).orElseThrow(
+        unavailableApartmentRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException(String.valueOf(id))
         );
 
-        update.setStartDate(unavailableApartment.getStartDate());
-        update.setEndDate(unavailableApartment.getEndDate());
-        update.setCauseDescription(unavailableApartment.getCauseDescription());
-        update.setApartment(apartment);
+        final Apartment apartment = apartmentService.findById(unavailableApartment.getApartment().getId());
 
-        return unavailableApartmentRepository.save(update);
+        unavailableApartment.setApartment(apartment);
+        unavailableApartment.setId(id);
+
+        return unavailableApartmentRepository.save(unavailableApartment);
     }
 
     public void deleteById(final Long id) {

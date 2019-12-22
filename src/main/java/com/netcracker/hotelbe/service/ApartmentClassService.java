@@ -36,16 +36,14 @@ public class ApartmentClassService {
         );
     }
 
-    public ApartmentClass update(final ApartmentClass apartmentClass, final Long id) {
-        ApartmentClass update = apartmentClassRepository.findById(id).orElseThrow(
+    public ApartmentClass update(ApartmentClass apartmentClass, final Long id) {
+        apartmentClassRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException(String.valueOf(id))
         );
 
-        update.setNameClass(apartmentClass.getNameClass());
-        update.setNumberOfRooms(apartmentClass.getNumberOfRooms());
-        update.setNumberOfCouchette(apartmentClass.getNumberOfCouchette());
+        apartmentClass.setId(id);
 
-        return apartmentClassRepository.save(update);
+        return apartmentClassRepository.save(apartmentClass);
     }
 
     public void deleteById(final Long id) {
@@ -65,8 +63,13 @@ public class ApartmentClassService {
 
     public ApartmentClass findByFields(String name, int numberOfCouchette, int numberOfRooms) {
         List<ApartmentClass> apartmentClasses = apartmentClassRepository.findByNameClassAndNumberOfCouchetteAndNumberOfRooms(name, numberOfCouchette, numberOfRooms);
-        ApartmentClass apartmentClass = apartmentClasses.get(0);
-        apartmentClass.setId(null);
+        ApartmentClass apartmentClass;
+        try {
+            apartmentClass = apartmentClasses.get(0);
+            apartmentClass.setId(null);
+        } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
+            apartmentClass = null;
+        }
         return apartmentClass;
     }
 }

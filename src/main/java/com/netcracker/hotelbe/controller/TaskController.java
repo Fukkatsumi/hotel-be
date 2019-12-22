@@ -51,13 +51,13 @@ public class TaskController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Task> updateTaskById(@RequestBody @Valid Task task, @PathVariable("id") Long id, BindingResult bindingResult) throws MethodArgumentNotValidException {
-        task.setId(id);
+
         taskValidator.validate(task, bindingResult);
         if (bindingResult.hasErrors()) {
             throw new MethodArgumentNotValidException(null, bindingResult);
         }
         try {
-            return new ResponseEntity<>(taskService.save(task), HttpStatus.OK);
+            return new ResponseEntity<>(taskService.update(task, id), HttpStatus.OK);
         } catch (RuntimeException e) {
             return RuntimeExceptionHandler.handlePSQLException(e);
         }

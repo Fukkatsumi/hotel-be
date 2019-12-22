@@ -43,19 +43,17 @@ public class ApartmentPriceService {
         );
     }
 
-    public ApartmentPrice update(final ApartmentPrice apartmentPrice, final Long id) {
-        final ApartmentClass apartmentClass = apartmentClassService.findById(apartmentPrice.getApartmentClass().getId());
-
-        ApartmentPrice update = apartmentPriceRepository.findById(id).orElseThrow(
+    public ApartmentPrice update(ApartmentPrice apartmentPrice, final Long id) {
+        apartmentPriceRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException(String.valueOf(id))
         );
 
-        update.setPrice(apartmentPrice.getPrice());
-        update.setStartPeriod(apartmentPrice.getStartPeriod());
-        update.setEndPeriod(apartmentPrice.getEndPeriod());
-        update.setApartmentClass(apartmentClass);
+        final ApartmentClass apartmentClass = apartmentClassService.findById(apartmentPrice.getApartmentClass().getId());
 
-        return apartmentPriceRepository.save(update);
+        apartmentPrice.setApartmentClass(apartmentClass);
+        apartmentPrice.setId(id);
+
+        return apartmentPriceRepository.save(apartmentPrice);
     }
 
     public void deleteById(final Long id) {

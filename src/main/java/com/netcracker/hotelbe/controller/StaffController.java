@@ -45,10 +45,8 @@ public class StaffController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Long> updateStaff(@RequestBody @Valid Staff staff, @PathVariable("id") Long id) {
-        staff.setId(id);
-        staff.setUser(userService.findById(id));
         try {
-            return new ResponseEntity<>(staffService.save(staff).getId(), HttpStatus.OK);
+            return new ResponseEntity<>(staffService.update(staff, id).getId(), HttpStatus.OK);
         } catch (RuntimeException e) {
             return RuntimeExceptionHandler.handlePSQLException(e);
         }

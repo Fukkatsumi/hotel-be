@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
+import javax.persistence.Table;
 import java.util.List;
 
 
@@ -22,7 +23,7 @@ public class TaskService {
 
     public Task findById(Long id){
         return taskRepository.findById(id).orElseThrow(
-                ()->new EntityNotFoundException("No entity with id=" + id + " found")
+                ()->new EntityNotFoundException(String.valueOf(id))
         );
     }
 
@@ -30,9 +31,19 @@ public class TaskService {
         return taskRepository.save(task);
     }
 
+    public Task update(Task task, Long id){
+        taskRepository.findById(id).orElseThrow(
+                () -> new EntityNotFoundException(String.valueOf(id))
+        );
+
+        task.setId(id);
+
+        return taskRepository.save(task);
+    }
+
     public void deleteById(Long id){
         if (!taskRepository.findById(id).isPresent()){
-            throw new EntityNotFoundException("No entity with id=" + id + " found");
+            throw new EntityNotFoundException(String.valueOf(id));
         }
         Task task = taskRepository.findById(id).get();
         task.setStatus(TaskStatus.Canceled);

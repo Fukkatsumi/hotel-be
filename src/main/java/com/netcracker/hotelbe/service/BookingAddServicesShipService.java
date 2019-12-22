@@ -14,21 +14,32 @@ public class BookingAddServicesShipService {
     @Autowired
     private BookingAddServicesShipRepository bookingAddServicesShipRepository;
 
-    public BookingAddServicesShip findById(long id){
+    public BookingAddServicesShip findById(long id) {
         return bookingAddServicesShipRepository.findById(id).orElseThrow(
-                ()->new EntityNotFoundException(String.valueOf(id))
+                () -> new EntityNotFoundException(String.valueOf(id))
         );
     }
 
-    public List<BookingAddServicesShip> findAll(){
+    public List<BookingAddServicesShip> findAll() {
         return bookingAddServicesShipRepository.findAll();
     }
 
-    public BookingAddServicesShip save(BookingAddServicesShip bookingAddServices){
+    public BookingAddServicesShip save(BookingAddServicesShip bookingAddServices) {
         return bookingAddServicesShipRepository.save(bookingAddServices);
     }
 
-    public void deleteById(Long id){
+    public BookingAddServicesShip update(BookingAddServicesShip bookingAddServicesShip, Long id) {
+
+        bookingAddServicesShipRepository.findById(id).orElseThrow(
+                () -> new EntityNotFoundException(String.valueOf(id))
+        );
+
+        bookingAddServicesShip.setId(id);
+
+        return bookingAddServicesShipRepository.save(bookingAddServicesShip);
+    }
+
+    public void deleteById(Long id) {
         BookingAddServicesShip delete = bookingAddServicesShipRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException(String.valueOf(id))
         );

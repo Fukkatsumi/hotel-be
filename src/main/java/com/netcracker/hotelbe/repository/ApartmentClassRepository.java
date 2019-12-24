@@ -13,6 +13,8 @@ public interface ApartmentClassRepository extends JpaRepository<ApartmentClass, 
     @Override
     Optional<ApartmentClass> findById(Long id);
 
+    Optional<ApartmentClass> findFirstByNameClass(String name);
+
     List<ApartmentClass> findByNameClassAndNumberOfCouchetteAndNumberOfRooms(String name, int numberOfCouchette, int numberOfRooms);
 
 }

@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("tasks")
@@ -34,6 +35,11 @@ public class TaskController {
     @GetMapping("/{id}")
     public ResponseEntity<Task> getTaskById(@PathVariable Long id) {
         return new ResponseEntity<>(taskService.findById(id), HttpStatus.OK);
+    }
+
+    @GetMapping("/options")
+    public ResponseEntity<List<Task>> getTasksByParams(@RequestParam Map<String,String> allParams){
+        return new ResponseEntity<>(taskService.getAllByParams(allParams), HttpStatus.OK);
     }
 
     @PostMapping

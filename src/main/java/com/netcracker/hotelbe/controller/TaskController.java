@@ -28,18 +28,13 @@ public class TaskController {
     private Validator taskValidator;
 
     @GetMapping
-    public ResponseEntity<List<Task>> getAllTasks() {
-        return new ResponseEntity<>(taskService.findAll(), HttpStatus.OK);
+    public ResponseEntity<List<Task>> getAllTasks(@RequestParam Map<String,String> allParams) {
+        return new ResponseEntity<>(taskService.getAllByParams(allParams), HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Task> getTaskById(@PathVariable Long id) {
         return new ResponseEntity<>(taskService.findById(id), HttpStatus.OK);
-    }
-
-    @GetMapping("/options")
-    public ResponseEntity<List<Task>> getTasksByParams(@RequestParam Map<String,String> allParams){
-        return new ResponseEntity<>(taskService.getAllByParams(allParams), HttpStatus.OK);
     }
 
     @PostMapping

@@ -129,13 +129,11 @@ public class TaskService {
         }
 
         if (allParams.get("status") != null) {
-
             Arrays.stream(TaskStatus.values())
                     .filter(e -> e.name().equalsIgnoreCase(allParams.get("status")))
                     .findAny()
                     .ifPresent(status -> filter.addCondition(new Condition("status", status,
                             Type.Object, Operation.equals)));
-
         }
 
         if (filter.getSize() == 0) {

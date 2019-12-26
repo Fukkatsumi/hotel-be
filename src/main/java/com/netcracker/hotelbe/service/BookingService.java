@@ -8,6 +8,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 
@@ -68,4 +75,24 @@ public class BookingService {
 
         bookingRepository.delete(delete);
     }
+
+    public ApartmentClass findFreeApartments(String arriveDate, String departureDate) {
+        List<Booking> bookingList = getAll();
+        List<Date> timestampList = new ArrayList<>();
+        ApartmentClass apartmentClass = new ApartmentClass();
+        for (Booking booking:
+             bookingList) {
+            apartmentClass = booking.getApartmentClass();
+        }
+        return apartmentClass;
+    }
+/*
+    private static String decodeValue(String value) {
+        try {
+            return URLDecoder.decode(value, StandardCharsets.UTF_8.toString());
+        } catch (UnsupportedEncodingException ex) {
+            throw new RuntimeException(ex.getCause());
+        }
+    }
+ */
 }

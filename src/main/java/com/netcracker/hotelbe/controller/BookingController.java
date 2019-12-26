@@ -1,5 +1,6 @@
 package com.netcracker.hotelbe.controller;
 
+import com.netcracker.hotelbe.entity.ApartmentClass;
 import com.netcracker.hotelbe.entity.Booking;
 import com.netcracker.hotelbe.service.BookingService;
 import com.netcracker.hotelbe.utils.RuntimeExceptionHandler;
@@ -52,5 +53,10 @@ public class BookingController {
     public ResponseEntity deleteById(@PathVariable Long id) {
         bookingService.deleteById(id);
         return new ResponseEntity(HttpStatus.OK);
+    }
+
+    @GetMapping("/find")
+    public ResponseEntity<List<ApartmentClass>> findFreeApartments(@RequestParam String startDate, @RequestParam String endDate) {
+        return new ResponseEntity(bookingService.findFreeApartments(startDate, endDate), HttpStatus.OK);
     }
 }

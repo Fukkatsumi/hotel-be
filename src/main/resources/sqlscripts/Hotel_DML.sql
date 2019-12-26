@@ -13,3 +13,8 @@ ALTER TABLE tasks ADD CONSTRAINT tasks_creator_id_fkey FOREIGN KEY (creator_id) 
 ALTER TABLE tasks ADD CONSTRAINT tasks_executor_id_fkey FOREIGN KEY (executor_id) REFERENCES staff(id);
 
 ALTER TYPE speciality ADD VALUE 'Hotel_Administrator';
+
+alter table unavailableapartments alter column start_date type date using start_date::date;
+alter table unavailableapartments alter column end_date type date using end_date::date;
+alter table bookings alter column start_date type date using start_date::date;
+alter table bookings alter column end_date type date using end_date::date;

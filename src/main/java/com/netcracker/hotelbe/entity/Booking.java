@@ -12,6 +12,7 @@ import javax.persistence.*;
 import javax.validation.constraints.Min;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
+import java.sql.Date;
 import java.sql.Timestamp;
 import java.util.List;
 
@@ -31,12 +32,12 @@ public class Booking implements Serializable {
     private long id;
 
     @Column(name = "start_date")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private Timestamp startDate;
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private Date startDate;
 
     @Column(name = "end_date")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private Timestamp endDate;
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private Date endDate;
 
     @Column(name = "total_price")
     @Min(value = 0, message = "Total price cant be less than 0")

@@ -11,7 +11,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
+import java.sql.Array;
 import java.sql.Timestamp;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -33,8 +35,11 @@ public class TaskService {
     }
 
     public List<Task> getAllByParams(Map<String, String> allParams) {
-
-        return taskRepository.findAll(fillFilter(allParams));
+        if(allParams.size()!=0) {
+            return taskRepository.findAll(fillFilter(allParams));
+        } else {
+            return taskRepository.findAll();
+        }
     }
 
     public Task save(Task task) {
@@ -123,10 +128,21 @@ public class TaskService {
             }
         }
 
+        if (allParams.get("status") != null) {
+
+            Arrays.stream(TaskStatus.values())
+                    .filter(e -> e.name().equalsIgnoreCase(allParams.get("status")))
+                    .findAny()
+                    .ifPresent(status -> filter.addCondition(new Condition("status", status,
+                            Type.Object, Operation.equals)));
+
+        }
+
         if (filter.getSize() == 0) {
             filter.addCondition(new Condition("end", new Timestamp(0), Type.Object, Operation.equals));
         }
 
         return filter;
     }
+
 }

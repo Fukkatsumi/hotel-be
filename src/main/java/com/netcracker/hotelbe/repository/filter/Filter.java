@@ -1,5 +1,6 @@
 package com.netcracker.hotelbe.repository.filter;
 
+import com.netcracker.hotelbe.utils.enums.RegEx;
 import org.springframework.data.jpa.domain.Specification;
 
 import javax.persistence.criteria.CriteriaBuilder;
@@ -33,7 +34,7 @@ public class Filter implements Specification {
         conditions.add(condition);
     }
 
-    public int getSize(){
+    public int getSize() {
         return conditions.size();
     }
 
@@ -45,71 +46,74 @@ public class Filter implements Specification {
     }
 
     private Predicate buildPredicate(Condition condition, Root root, CriteriaBuilder criteriaBuilder) {
-        switch (condition.getOperation()) {
-            case equals:
-                return buildEqualPredicate(condition, root, criteriaBuilder);
-            case between:
-                return buildBetweenPredicate(condition, root, criteriaBuilder);
-            default:
-                break;
+        try {
+            switch (condition.getOperation()) {
+                case equals:
+                    return buildEqualPredicate(condition, root, criteriaBuilder);
+                case between:
+                    return buildBetweenPredicate(condition, root, criteriaBuilder);
+                default:
+                    break;
+            }
+            return criteriaBuilder.equal(root.get(condition.getField()), condition.getValue());
+        } catch (IllegalArgumentException e) {
+            //TODO
+            return null;
         }
-        return criteriaBuilder.equal(root.get(condition.getField()), condition.getValue());
     }
 
-    private Predicate buildEqualPredicate(Condition condition, Root root, CriteriaBuilder criteriaBuilder){
-        switch (condition.getType()) {
-            case Long:
-                return criteriaBuilder.equal(root.get(condition.getField()), Long.valueOf((String) condition.getValue()));
-            case Date:
-                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                Date parsedDate = null;
-                try {
-                    parsedDate = dateFormat.parse((String) condition.getValue());
-                    //TODO
-                    //The database stores a date with a shift +2 hours
-                    parsedDate.setHours(parsedDate.getHours()+2);
-                } catch (ParseException ParseException) {
-                    //TODO
-                }
-                Timestamp timestamp = Timestamp.valueOf(dateFormat.format(parsedDate));
+    private Predicate buildEqualPredicate(Condition condition, Root root, CriteriaBuilder criteriaBuilder) throws IllegalArgumentException {
+        if (condition.getValue().toString().matches(RegEx.LONG.getFullName())) {
+            return criteriaBuilder.equal(root.get(condition.getField()), Long.valueOf((String) condition.getValue()));
+        } else if (condition.getValue().toString().matches(RegEx.DATE.getFullName())) {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            Date parsedDate = null;
+            try {
+                parsedDate = dateFormat.parse((String) condition.getValue());
+                //TODO
+                //The database stores a date with a shift +2 hours
+                parsedDate.setHours(parsedDate.getHours() + 2);
+            } catch (ParseException ParseException) {
+                //TODO
+            }
+            Timestamp timestamp = Timestamp.valueOf(dateFormat.format(parsedDate));
 
-                return criteriaBuilder.equal(root.get(condition.getField()), timestamp);
-            default:
-                return criteriaBuilder.equal(root.get(condition.getField()), condition.getValue());        }
+            return criteriaBuilder.equal(root.get(condition.getField()), timestamp);
+        } else {
+            return criteriaBuilder.equal(root.get(condition.getField()), condition.getValue());
+        }
 
     }
 
-    private Predicate buildBetweenPredicate(Condition condition, Root root, CriteriaBuilder criteriaBuilder){
-        switch (condition.getType()){
-            case Long:
-                Long firstLongValue = Long.valueOf(condition.getValue().toString().split(";")[0]);
-                Long secondLongValue = Long.valueOf(condition.getValue().toString().split(";")[1]);
+    private Predicate buildBetweenPredicate(Condition condition, Root root, CriteriaBuilder criteriaBuilder) throws IllegalArgumentException {
+        String firstValue = condition.getValue().toString().split(";")[0];
+        String secondValue = condition.getValue().toString().split(";")[1];
+        if (firstValue.matches(RegEx.LONG.getFullName()) && secondValue.matches(RegEx.LONG.getFullName())) {
+            Long firstLongValue = Long.valueOf(condition.getValue().toString().split(";")[0]);
+            Long secondLongValue = Long.valueOf(condition.getValue().toString().split(";")[1]);
 
-                return criteriaBuilder.between(root.<Long>get(condition.getField()), firstLongValue, secondLongValue);
-            case Date:
-                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-                Date parsedFirstDate = null;
-                Date parsedSecondDate = null;
-                try {
-                    parsedFirstDate = dateFormat.parse(condition.getValue().toString().split(";")[0]);
-                    parsedSecondDate = dateFormat.parse(condition.getValue().toString().split(";")[1]);
+            return criteriaBuilder.between(root.<Long>get(condition.getField()), firstLongValue, secondLongValue);
+        } else if (firstValue.matches(RegEx.DATE.getFullName()) && secondValue.matches(RegEx.DATE.getFullName())) {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            Date parsedFirstDate = null;
+            Date parsedSecondDate = null;
+            try {
+                parsedFirstDate = dateFormat.parse(condition.getValue().toString().split(";")[0]);
+                parsedSecondDate = dateFormat.parse(condition.getValue().toString().split(";")[1]);
 
-                    //TODO
-                    //The database stores a date with a shift +2 hours
-                    parsedFirstDate.setHours(parsedFirstDate.getHours()+2);
-                    parsedSecondDate.setHours(parsedSecondDate.getHours()+2);
-                } catch (ParseException ParseException) {
-                    //TODO
-                }
-                Timestamp firstDate = Timestamp.valueOf(dateFormat.format(parsedFirstDate));
-                Timestamp secondDate = Timestamp.valueOf(dateFormat.format(parsedSecondDate));
+                //TODO
+                //The database stores a date with a shift +2 hours
+                parsedFirstDate.setHours(parsedFirstDate.getHours() + 2);
+                parsedSecondDate.setHours(parsedSecondDate.getHours() + 2);
+            } catch (ParseException ParseException) {
+                //TODO
+            }
+            Timestamp firstDate = Timestamp.valueOf(dateFormat.format(parsedFirstDate));
+            Timestamp secondDate = Timestamp.valueOf(dateFormat.format(parsedSecondDate));
 
-                return criteriaBuilder.between(root.<Date>get(condition.getField()), firstDate, secondDate);
-            default:
-                String firstValue = condition.getValue().toString().split(";")[0];
-                String secondValue = condition.getValue().toString().split(";")[1];
-
-                return criteriaBuilder.between(root.get(condition.getField()), firstValue, secondValue);
+            return criteriaBuilder.between(root.<Date>get(condition.getField()), firstDate, secondDate);
+        } else {
+            return criteriaBuilder.between(root.get(condition.getField()), firstValue, secondValue);
         }
     }
 }

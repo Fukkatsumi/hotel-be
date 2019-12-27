@@ -7,6 +7,7 @@ import com.netcracker.hotelbe.repository.filter.Condition;
 import com.netcracker.hotelbe.repository.filter.Filter;
 import com.netcracker.hotelbe.repository.filter.Operation;
 import com.netcracker.hotelbe.repository.filter.Type;
+import com.netcracker.hotelbe.service.filter.FilterService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +24,9 @@ public class TaskService {
     @Autowired
     private TaskRepository taskRepository;
 
+    @Autowired
+    private FilterService filterService;
+
     public List<Task> findAll() {
         return taskRepository.findAll();
     }
@@ -35,7 +39,7 @@ public class TaskService {
 
     public List<Task> getAllByParams(Map<String, String> allParams) {
         if(allParams.size()!=0) {
-            return taskRepository.findAll(fillFilter(allParams));
+            return taskRepository.findAll(filterService.fillFilter(allParams, Task.class));
         } else {
             return taskRepository.findAll();
         }

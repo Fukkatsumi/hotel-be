@@ -21,12 +21,12 @@ public class LoggingManager {
 
     private static final Logger LOG = LogManager.getLogger(LoggingManager.class);
 
-    @Pointcut("execution(* com.netcracker.hotelbe.*.*.*(..) )")
+    @Pointcut("execution(* com.netcracker.*(..) )")
     public void allPointcut() {
 
     }
 
-    @Around("allPointcut()")
+    @Around("bean(*Controller)")
     public Object logControllerMethods(final ProceedingJoinPoint pjp) throws Throwable {
         String methodName = pjp.getSignature().getName();
         String className = pjp.getTarget().getClass().toString();
@@ -36,6 +36,16 @@ public class LoggingManager {
             LOG.info(className + " : " + methodName + "() " + "Response : "
                     + new ObjectMapper().writeValueAsString(object));
         }
+
+        return object;
+    }
+
+    @Around("bean(*Service)")
+    public Object logServiceMethods(final ProceedingJoinPoint pjp) throws Throwable {
+        String methodName = pjp.getSignature().getName();
+        String className = pjp.getTarget().getClass().toString();
+        Object object = pjp.proceed();
+
         if (className.contains("com.netcracker.hotelbe.service")) {
             LOG.trace(className + " : " + methodName + "() " + "Return : "
                     + new ObjectMapper().writeValueAsString(object));

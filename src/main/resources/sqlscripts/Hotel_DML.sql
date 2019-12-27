@@ -18,3 +18,6 @@ alter table unavailableapartments alter column start_date type date using start_
 alter table unavailableapartments alter column end_date type date using end_date::date;
 alter table bookings alter column start_date type date using start_date::date;
 alter table bookings alter column end_date type date using end_date::date;
+
+ALTER TABLE apartmentclass
+    ADD CONSTRAINT apartmentclass_name_unique UNIQUE (name_class);

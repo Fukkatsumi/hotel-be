@@ -2,17 +2,22 @@ package com.netcracker.hotelbe.service;
 
 import com.netcracker.hotelbe.entity.BookingAddServicesShip;
 import com.netcracker.hotelbe.repository.BookingAddServicesShipRepository;
+import com.netcracker.hotelbe.service.filter.FilterService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class BookingAddServicesShipService {
 
     @Autowired
     private BookingAddServicesShipRepository bookingAddServicesShipRepository;
+
+    @Autowired
+    private FilterService filterService;
 
     public BookingAddServicesShip findById(long id) {
         return bookingAddServicesShipRepository.findById(id).orElseThrow(
@@ -22,6 +27,14 @@ public class BookingAddServicesShipService {
 
     public List<BookingAddServicesShip> findAll() {
         return bookingAddServicesShipRepository.findAll();
+    }
+
+    public List<BookingAddServicesShip> getAllByParams(Map<String, String> allParams) {
+        if(allParams.size()!=0) {
+            return bookingAddServicesShipRepository.findAll(filterService.fillFilter(allParams, BookingAddServicesShip.class));
+        } else {
+            return bookingAddServicesShipRepository.findAll();
+        }
     }
 
     public BookingAddServicesShip save(BookingAddServicesShip bookingAddServices) {

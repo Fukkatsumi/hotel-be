@@ -10,7 +10,6 @@ import lombok.NoArgsConstructor;
 public class Condition {
     private String field;
     private Object value;
-    private Type type;
     private Operation operation;
 
 }

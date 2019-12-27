@@ -21,7 +21,7 @@ public class LoggingManager {
 
     private static final Logger LOG = LogManager.getLogger(LoggingManager.class);
 
-    @Pointcut("execution(* com.netcracker.*(..) )")
+    @Pointcut("execution(* com.netcracker.hotelbe.*.*(..) )")
     public void allPointcut() {
 
     }

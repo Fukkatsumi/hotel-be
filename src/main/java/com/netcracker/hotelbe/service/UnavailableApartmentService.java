@@ -3,6 +3,7 @@ package com.netcracker.hotelbe.service;
 import com.netcracker.hotelbe.entity.Apartment;
 import com.netcracker.hotelbe.entity.UnavailableApartment;
 import com.netcracker.hotelbe.repository.UnavailableApartmentRepository;
+import com.netcracker.hotelbe.service.filter.FilterService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import javax.persistence.EntityNotFoundException;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class UnavailableApartmentService {
@@ -26,8 +28,19 @@ public class UnavailableApartmentService {
     @Qualifier("unavailableApartmentValidator")
     private Validator unavailableApartmentValidator;
 
+    @Autowired
+    private FilterService filterService;
+
     public List<UnavailableApartment> getAll() {
         return unavailableApartmentRepository.findAll();
+    }
+
+    public List<UnavailableApartment> getAllByParams(Map<String, String> allParams) {
+        if(allParams.size()!=0) {
+            return unavailableApartmentRepository.findAll(filterService.fillFilter(allParams, UnavailableApartment.class));
+        } else {
+            return unavailableApartmentRepository.findAll();
+        }
     }
 
     public UnavailableApartment save(UnavailableApartment unavailableApartment) {

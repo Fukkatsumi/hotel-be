@@ -3,7 +3,6 @@ package com.netcracker.hotelbe.controller;
 
 import com.netcracker.hotelbe.entity.Staff;
 import com.netcracker.hotelbe.service.StaffService;
-import com.netcracker.hotelbe.service.UserService;
 import com.netcracker.hotelbe.utils.RuntimeExceptionHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;

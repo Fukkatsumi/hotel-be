@@ -3,11 +3,13 @@ package com.netcracker.hotelbe.service;
 import com.netcracker.hotelbe.entity.Apartment;
 import com.netcracker.hotelbe.entity.ApartmentClass;
 import com.netcracker.hotelbe.repository.ApartmentRepository;
+import com.netcracker.hotelbe.service.filter.FilterService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class ApartmentService {
@@ -18,8 +20,19 @@ public class ApartmentService {
     @Autowired
     private ApartmentClassService apartmentClassService;
 
+    @Autowired
+    private FilterService filterService;
+
     public List<Apartment> getAll() {
         return apartmentRepository.findAll();
+    }
+
+    public List<Apartment> getAllByParams(Map<String, String> allParams) {
+        if(allParams.size()!=0) {
+            return apartmentRepository.findAll(filterService.fillFilter(allParams, Apartment.class));
+        } else {
+            return apartmentRepository.findAll();
+        }
     }
 
     public Apartment save(Apartment apartment) {

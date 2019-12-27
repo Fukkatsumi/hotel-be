@@ -23,13 +23,12 @@ public class FilterService {
         Filter filter = new Filter();
         allParams.forEach((k, v) -> {
             try {
-                String fieldName = k.toLowerCase();
-                Field field = clazz.getDeclaredField(fieldName);
+                Field field = clazz.getDeclaredField(k);
                 if (field != null) {
                     Class fieldClass = field.getType();
                     if (v.matches(RegEx.DATE.getFullName())
                             && (fieldClass.equals(Date.class) || fieldClass.equals(Timestamp.class))) {
-                        filter.addCondition(conditionService.getConditionFromDate(fieldName, v));
+                        filter.addCondition(conditionService.getConditionFromDate(k, v));
 
                     } else if(fieldClass.isEnum()){
                         Method method = fieldClass.getDeclaredMethod("values");
@@ -37,9 +36,9 @@ public class FilterService {
                         Arrays.stream((Object[]) obj)
                                 .filter(enumField -> enumField.toString().equalsIgnoreCase(v))
                                 .findAny()
-                                .ifPresent(enumValue -> filter.addCondition(conditionService.getConditionFromEnum(fieldName, enumValue)));
+                                .ifPresent(enumValue -> filter.addCondition(conditionService.getConditionFromEnum(k, enumValue)));
                     } else {
-                        filter.addCondition(conditionService.getConditionFromString(fieldName, v));
+                        filter.addCondition(conditionService.getConditionFromString(k, v));
                     }
 
                 }

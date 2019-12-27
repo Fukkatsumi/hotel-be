@@ -3,6 +3,7 @@ package com.netcracker.hotelbe.service;
 import com.netcracker.hotelbe.entity.ApartmentClass;
 import com.netcracker.hotelbe.entity.ApartmentPrice;
 import com.netcracker.hotelbe.repository.ApartmentPriceRepository;
+import com.netcracker.hotelbe.service.filter.FilterService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -12,6 +13,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import javax.persistence.EntityNotFoundException;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class ApartmentPriceService {
@@ -26,8 +28,19 @@ public class ApartmentPriceService {
     @Qualifier("apartmentPriceValidator")
     private Validator apartmentPriceValidator;
 
+    @Autowired
+    private FilterService filterService;
+
     public List<ApartmentPrice> findAll() {
         return apartmentPriceRepository.findAll();
+    }
+
+    public List<ApartmentPrice> getAllByParams(Map<String, String> allParams) {
+        if(allParams.size()!=0) {
+            return apartmentPriceRepository.findAll(filterService.fillFilter(allParams, ApartmentPrice.class));
+        } else {
+            return apartmentPriceRepository.findAll();
+        }
     }
 
     public ApartmentPrice save(ApartmentPrice apartmentPrice) {

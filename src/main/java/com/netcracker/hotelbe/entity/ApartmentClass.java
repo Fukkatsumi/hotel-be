@@ -63,3 +63,4 @@ public class ApartmentClass implements Serializable {
         return Objects.hash(nameClass, numberOfRooms, numberOfCouchette);
     }
 }
+

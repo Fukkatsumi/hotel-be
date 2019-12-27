@@ -2,6 +2,7 @@ package com.netcracker.hotelbe.controller;
 
 import com.netcracker.hotelbe.entity.Apartment;
 import com.netcracker.hotelbe.entity.ApartmentClass;
+import com.netcracker.hotelbe.entity.ApartmentClassCustom;
 import com.netcracker.hotelbe.entity.Booking;
 import com.netcracker.hotelbe.service.BookingService;
 import com.netcracker.hotelbe.utils.RuntimeExceptionHandler;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Map;
 
 
 @RestController
@@ -61,7 +63,7 @@ public class BookingController {
     }
 
     @GetMapping("/find")
-    public ResponseEntity<Integer> findFreeApartments(@RequestParam String startDate, @RequestParam String endDate) {
+    public ResponseEntity<List<ApartmentClassCustom>> findFreeApartments(@RequestParam String startDate, @RequestParam String endDate) {
         return new ResponseEntity<>(bookingService.findFreeApartments(startDate, endDate), HttpStatus.OK);
     }
 }

@@ -1,5 +1,6 @@
 package com.netcracker.hotelbe.service.validation;
 
+import com.netcracker.hotelbe.entity.ApartmentClassCustom;
 import com.netcracker.hotelbe.entity.Booking;
 import com.netcracker.hotelbe.entity.UnavailableApartment;
 import com.netcracker.hotelbe.service.BookingService;
@@ -10,6 +11,7 @@ import org.springframework.validation.Validator;
 
 import javax.validation.ConstraintViolation;
 import java.sql.Date;
+import java.util.List;
 import java.util.Set;
 
 @Service
@@ -50,8 +52,18 @@ public class BookingValidator implements Validator {
         if (booking.getEndDate().compareTo(booking.getStartDate()) < 0){
             errors.rejectValue("endDate", "", "End date cant be before start date");
         }
-        if (bookingService.findFreeApartments(booking.getStartDate().toString(), booking.getEndDate().toString()) == 0) {
+        List<ApartmentClassCustom> apartmentClassCustomList = bookingService.findFreeApartments(booking.getStartDate().toString(), booking.getEndDate().toString());
+        if (apartmentClassCustomList == null) {
             errors.rejectValue("startDate", "endDate", "Free apartments on these dates didn't find");
+        } else {
+            for (ApartmentClassCustom apartmentClassCustom :
+                    apartmentClassCustomList) {
+                if (apartmentClassCustom.getApartmentClass().getId().equals(booking.getApartmentClass().getId())) {
+                    if (apartmentClassCustom.getCountOfApartments() == 0) {
+                        errors.rejectValue("apartmentClass", "", "Free apartment doesn't exist in this apartment Class");
+                    }
+                }
+            }
         }
     }
 }

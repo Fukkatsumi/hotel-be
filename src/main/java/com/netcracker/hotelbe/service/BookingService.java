@@ -2,6 +2,7 @@ package com.netcracker.hotelbe.service;
 
 import com.netcracker.hotelbe.entity.*;
 import com.netcracker.hotelbe.repository.BookingRepository;
+import com.netcracker.hotelbe.service.filter.FilterService;
 import com.netcracker.hotelbe.utils.LoggingManager;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
@@ -16,7 +17,10 @@ import javax.persistence.EntityNotFoundException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.sql.Date;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 @Service
@@ -40,6 +44,9 @@ public class BookingService {
     UnavailableApartmentService unavailableApartmentService;
 
     @Autowired
+    private FilterService filterService;
+
+    @Autowired
     @Qualifier("bookingValidator")
     private Validator bookingValidator;
 
@@ -59,6 +66,14 @@ public class BookingService {
         return bookingRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException(String.valueOf(id))
         );
+    }
+
+    public List<Booking> getAllByParams(Map<String, String> allParams) {
+        if(allParams.size()!=0) {
+            return bookingRepository.findAll(filterService.fillFilter(allParams, Booking.class));
+        } else {
+            return bookingRepository.findAll();
+        }
     }
 
     public Booking update(Booking booking, Long id) {
@@ -86,13 +101,13 @@ public class BookingService {
         bookingRepository.delete(delete);
     }
 
-    public int findFreeApartments(String startDateStr, String endDateStr) {
+    public List<ApartmentClassCustom> findFreeApartments(String startDateStr, String endDateStr) {
         List<Booking> bookingList = getAll();
         List<UnavailableApartment> unavailableApartmentList = unavailableApartmentService.getAll();
         List<Apartment> apartmentList = apartmentService.getAll();
         Date startDate = toDate(startDateStr);
         Date endDate = toDate(endDateStr);
-        if (isValidDates(startDate, endDate)) return 0;
+        if (isValidDates(startDate, endDate)) return null;
         for (UnavailableApartment unavailableApartment:
              unavailableApartmentList) {
             if ((startDate.compareTo(unavailableApartment.getStartDate()) >= 0
@@ -123,7 +138,7 @@ public class BookingService {
                 removeApartment(apartmentList, booking);
             }
         }
-        return apartmentList.size();
+        return toApartmentClassCustom(apartmentList);
     }
 
     private void removeApartment(List<Apartment> apartmentList, Booking booking) {
@@ -162,5 +177,24 @@ public class BookingService {
         if (bindingResult.hasErrors()) {
             throw new MethodArgumentNotValidException(null, bindingResult);
         }
+    }
+
+    private List<ApartmentClassCustom> toApartmentClassCustom(List<Apartment> apartmentList) {
+        List<ApartmentClassCustom> apartmentClassCustomsList = new ArrayList<>();
+        for (ApartmentClass apartmentClass:
+             apartmentClassService.findAll()) {
+            ApartmentClassCustom apartmentClassCustomTemp = new ApartmentClassCustom(apartmentClass);
+            apartmentClassCustomsList.add(apartmentClassCustomTemp);
+        }
+        for (Apartment apartment:
+             apartmentList) {
+            for (ApartmentClassCustom apClassCustom:
+                 apartmentClassCustomsList) {
+                if (apClassCustom.getApartmentClass().getId().equals(apartment.getApartmentClass().getId())){
+                    apClassCustom.setCountOfApartments(apClassCustom.getCountOfApartments()+1);
+                }
+            }
+        }
+        return apartmentClassCustomsList;
     }
 }

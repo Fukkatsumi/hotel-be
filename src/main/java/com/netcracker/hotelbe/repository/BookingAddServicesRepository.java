@@ -1,6 +1,5 @@
 package com.netcracker.hotelbe.repository;
 
-import com.netcracker.hotelbe.entity.Booking;
 import com.netcracker.hotelbe.entity.BookingAddServices;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.transaction.annotation.Transactional;

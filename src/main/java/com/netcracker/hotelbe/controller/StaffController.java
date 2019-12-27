@@ -19,9 +19,6 @@ public class StaffController {
 
     @Autowired
     private StaffService staffService;
-    @Autowired
-    private UserService userService;
-
 
     @GetMapping
     public ResponseEntity<List<Staff>> getAllStaff() {

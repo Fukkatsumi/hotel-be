@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("apartmentPrices")
@@ -21,8 +22,8 @@ public class ApartmentPriceController {
     private ApartmentPriceService apartmentPriceService;
 
     @GetMapping
-    public ResponseEntity<List<ApartmentPrice>> getAll() {
-        return new ResponseEntity<>(apartmentPriceService.findAll(), HttpStatus.OK);
+    public ResponseEntity<List<ApartmentPrice>> getAll(@RequestParam Map<String,String> allParams) {
+        return new ResponseEntity<>(apartmentPriceService.getAllByParams(allParams), HttpStatus.OK);
     }
 
     @GetMapping("/{id}")

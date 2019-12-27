@@ -1,6 +1,5 @@
 package com.netcracker.hotelbe.controller;
 
-import com.netcracker.hotelbe.entity.BookingAddServices;
 import com.netcracker.hotelbe.entity.BookingAddServicesShip;
 import com.netcracker.hotelbe.service.BookingAddServicesShipService;
 import com.netcracker.hotelbe.utils.RuntimeExceptionHandler;

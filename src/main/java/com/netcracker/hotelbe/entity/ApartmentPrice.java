@@ -6,7 +6,6 @@ import lombok.Data;
 
 import javax.persistence.*;
 import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
 import java.io.Serializable;
 import java.sql.Date;
 
@@ -35,7 +34,7 @@ public class ApartmentPrice implements Serializable {
     private Date endPeriod;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "apartmentClass_id")
+    @JoinColumn(name = "apartmentclass_id")
     private ApartmentClass apartmentClass;
 
 }

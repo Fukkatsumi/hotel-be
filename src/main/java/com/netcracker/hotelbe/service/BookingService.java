@@ -1,25 +1,28 @@
 package com.netcracker.hotelbe.service;
 
-import com.netcracker.hotelbe.entity.ApartmentClass;
-import com.netcracker.hotelbe.entity.Booking;
-import com.netcracker.hotelbe.entity.User;
+import com.netcracker.hotelbe.entity.*;
 import com.netcracker.hotelbe.repository.BookingRepository;
+import com.netcracker.hotelbe.utils.LoggingManager;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.Validator;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import javax.persistence.EntityNotFoundException;
-import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-import java.sql.Timestamp;
-import java.util.ArrayList;
-import java.util.Date;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.sql.Date;
 import java.util.List;
 
 
 @Service
 public class BookingService {
+
+    private static final Logger LOG = LogManager.getLogger(LoggingManager.class);
 
     @Autowired
     BookingRepository bookingRepository;
@@ -32,6 +35,13 @@ public class BookingService {
 
     @Autowired
     UserService userService;
+
+    @Autowired
+    UnavailableApartmentService unavailableApartmentService;
+
+    @Autowired
+    @Qualifier("bookingValidator")
+    private Validator bookingValidator;
 
     public List<Booking> getAll() {
         return bookingRepository.findAll();
@@ -76,23 +86,81 @@ public class BookingService {
         bookingRepository.delete(delete);
     }
 
-    public ApartmentClass findFreeApartments(String arriveDate, String departureDate) {
+    public int findFreeApartments(String startDateStr, String endDateStr) {
         List<Booking> bookingList = getAll();
-        List<Date> timestampList = new ArrayList<>();
-        ApartmentClass apartmentClass = new ApartmentClass();
+        List<UnavailableApartment> unavailableApartmentList = unavailableApartmentService.getAll();
+        List<Apartment> apartmentList = apartmentService.getAll();
+        Date startDate = toDate(startDateStr);
+        Date endDate = toDate(endDateStr);
+        if (isValidDates(startDate, endDate)) return 0;
+        for (UnavailableApartment unavailableApartment:
+             unavailableApartmentList) {
+            if ((startDate.compareTo(unavailableApartment.getStartDate()) >= 0
+                    && (endDate.compareTo(unavailableApartment.getEndDate()) <= 0))
+                    || ((startDate.compareTo(unavailableApartment.getStartDate()) < 0)
+                    && (endDate.compareTo(unavailableApartment.getEndDate()) <= 0)
+                    &&(endDate.compareTo(unavailableApartment.getStartDate()) >= 0))
+                    ||  ((startDate.compareTo(unavailableApartment.getStartDate()) >= 0)
+                    && (startDate.compareTo(unavailableApartment.getEndDate()) <= 0)
+                    && (endDate.compareTo(unavailableApartment.getEndDate()) > 0))
+                    || ((startDate.compareTo(unavailableApartment.getStartDate()) < 0 )
+                    && (endDate.compareTo(unavailableApartment.getEndDate()) > 0)))  {
+                apartmentList.remove(unavailableApartment.getApartment());
+            }
+        }
         for (Booking booking:
-             bookingList) {
+                bookingList) {
+            if ((startDate.compareTo(booking.getStartDate()) >= 0
+                    && (endDate.compareTo(booking.getEndDate()) <= 0))
+                    || ((startDate.compareTo(booking.getStartDate()) < 0)
+                    && (endDate.compareTo(booking.getEndDate()) <= 0)
+                    &&(endDate.compareTo(booking.getStartDate()) >= 0))
+                    ||  ((startDate.compareTo(booking.getStartDate()) >= 0)
+                    && (startDate.compareTo(booking.getEndDate()) <= 0)
+                    && (endDate.compareTo(booking.getEndDate()) > 0))
+                    || ((startDate.compareTo(booking.getStartDate()) < 0 )
+                    && (endDate.compareTo(booking.getEndDate()) > 0))) {
+                removeApartment(apartmentList, booking);
+            }
+        }
+        return apartmentList.size();
+    }
+
+    private void removeApartment(List<Apartment> apartmentList, Booking booking) {
+        ApartmentClass apartmentClass;
+        if (booking.getApartment() == null) {
             apartmentClass = booking.getApartmentClass();
+            for (Apartment apartment :
+                    apartmentList) {
+                if (apartment.getApartmentClass() == apartmentClass) {
+                    apartmentList.remove(apartment);
+                    break;
+                }
+            }
         }
-        return apartmentClass;
+        apartmentList.remove(booking.getApartment());
     }
-/*
-    private static String decodeValue(String value) {
+
+    private Date toDate(String strDate) {
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
         try {
-            return URLDecoder.decode(value, StandardCharsets.UTF_8.toString());
-        } catch (UnsupportedEncodingException ex) {
-            throw new RuntimeException(ex.getCause());
+            java.util.Date date = simpleDateFormat.parse(strDate);
+            long dateLong = date.getTime();
+            return new Date(dateLong);
+        } catch (ParseException e) {
+            LOG.error(e.getMessage());
+        }
+        return null;
+    }
+
+    private boolean isValidDates(Date startDate, Date endDate) {
+        return endDate == null || startDate == null || endDate.compareTo(startDate) < 0;
+    }
+
+    public void validate(final Booking booking, BindingResult bindingResult) throws MethodArgumentNotValidException {
+        bookingValidator.validate(booking, bindingResult);
+        if (bindingResult.hasErrors()) {
+            throw new MethodArgumentNotValidException(null, bindingResult);
         }
     }
- */
 }

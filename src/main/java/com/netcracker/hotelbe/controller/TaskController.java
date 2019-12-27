@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("tasks")
@@ -27,8 +28,8 @@ public class TaskController {
     private Validator taskValidator;
 
     @GetMapping
-    public ResponseEntity<List<Task>> getAllTasks() {
-        return new ResponseEntity<>(taskService.findAll(), HttpStatus.OK);
+    public ResponseEntity<List<Task>> getAllTasks(@RequestParam Map<String,String> allParams) {
+        return new ResponseEntity<>(taskService.getAllByParams(allParams), HttpStatus.OK);
     }
 
     @GetMapping("/{id}")

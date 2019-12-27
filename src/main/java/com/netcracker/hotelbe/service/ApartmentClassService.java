@@ -36,6 +36,12 @@ public class ApartmentClassService {
         );
     }
 
+    public ApartmentClass findByName(final String name){
+        return apartmentClassRepository.findFirstByNameClass(name).orElseThrow(
+                () -> new EntityNotFoundException(String.valueOf(name))
+        );
+    }
+
     public ApartmentClass update(ApartmentClass apartmentClass, final Long id) {
         apartmentClassRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException(String.valueOf(id))

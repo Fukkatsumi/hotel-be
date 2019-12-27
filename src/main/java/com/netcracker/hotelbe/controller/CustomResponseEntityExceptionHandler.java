@@ -3,6 +3,7 @@ package com.netcracker.hotelbe.controller;
 
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +20,7 @@ import java.util.stream.Collectors;
 
 @ControllerAdvice
 public class CustomResponseEntityExceptionHandler extends ResponseEntityExceptionHandler {
-    private static Logger logger = LogManager.getLogger("CustomResponseEntityException");
+    private static final Logger LOGGER = LogManager.getLogger("CustomResponseEntityException");
     private static String NOT_FOUND_ENTITY_WITH_ID = "No entity with id = %s found";
 
     @Override
@@ -32,9 +33,18 @@ public class CustomResponseEntityExceptionHandler extends ResponseEntityExceptio
     @ExceptionHandler(value = {EntityNotFoundException.class})
     protected ResponseEntity<Object> handleEntityNotFoundException(EntityNotFoundException ex) {
         final String message = String.format(NOT_FOUND_ENTITY_WITH_ID, ex.getMessage());
-        logger.warn(message);
+        LOGGER.warn(message);
 
         return new ResponseEntity<>(message, HttpStatus.NOT_FOUND);
+    }
+
+    @ExceptionHandler(value = {InvalidDataAccessApiUsageException.class})
+    protected ResponseEntity<Object> handleInvalidDataAccessApiUsageException(InvalidDataAccessApiUsageException ex){
+        StringBuilder message = new StringBuilder();
+        message.append(ex.getMessage().split("\\[")[0]).append("[").append(ex.getMessage().split("\\[")[1]);
+        LOGGER.warn(message);
+
+        return new ResponseEntity<>(message, HttpStatus.BAD_REQUEST);
     }
 
 }

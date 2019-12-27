@@ -2,12 +2,8 @@ package com.netcracker.hotelbe.service.filter;
 
 import com.netcracker.hotelbe.repository.filter.Condition;
 import com.netcracker.hotelbe.repository.filter.Operation;
-import com.netcracker.hotelbe.repository.filter.Type;
 import com.netcracker.hotelbe.utils.enums.RegEx;
 import org.springframework.stereotype.Service;
-
-import java.lang.reflect.Field;
-import java.sql.Timestamp;
 
 @Service
 public class ConditionService {
@@ -67,14 +63,14 @@ public class ConditionService {
     }
 
     public Condition getConditionFromString(String name, String value){
-        return new Condition(name, value, Type.Object, Operation.equals);
+        return new Condition(name, value, Operation.equals);
     }
 
     public Condition getDefaultCondition(){
-        return new Condition("id", -1, Type.Long, Operation.equals);
+        return new Condition("id", -1, Operation.equals);
     }
 
     public Condition getConditionFromEnum(String fieldName, Object value){
-       return new Condition(fieldName, value, Type.Object, Operation.equals);
+       return new Condition(fieldName, value, Operation.equals);
     }
 }

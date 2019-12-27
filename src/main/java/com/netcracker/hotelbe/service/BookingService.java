@@ -4,11 +4,13 @@ import com.netcracker.hotelbe.entity.ApartmentClass;
 import com.netcracker.hotelbe.entity.Booking;
 import com.netcracker.hotelbe.entity.User;
 import com.netcracker.hotelbe.repository.BookingRepository;
+import com.netcracker.hotelbe.service.filter.FilterService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
 import java.util.List;
+import java.util.Map;
 
 
 @Service
@@ -26,8 +28,19 @@ public class BookingService {
     @Autowired
     UserService userService;
 
+    @Autowired
+    private FilterService filterService;
+
     public List<Booking> getAll() {
         return bookingRepository.findAll();
+    }
+
+    public List<Booking> getAllByParams(Map<String, String> allParams) {
+        if(allParams.size()!=0) {
+            return bookingRepository.findAll(filterService.fillFilter(allParams, Booking.class));
+        } else {
+            return bookingRepository.findAll();
+        }
     }
 
     public Booking save(final Booking booking) {

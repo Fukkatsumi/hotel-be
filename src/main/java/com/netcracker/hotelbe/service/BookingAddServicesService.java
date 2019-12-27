@@ -2,17 +2,22 @@ package com.netcracker.hotelbe.service;
 
 import com.netcracker.hotelbe.entity.BookingAddServices;
 import com.netcracker.hotelbe.repository.BookingAddServicesRepository;
+import com.netcracker.hotelbe.service.filter.FilterService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class BookingAddServicesService {
 
     @Autowired
     private BookingAddServicesRepository bookingAddServicesRepository;
+
+    @Autowired
+    private FilterService filterService;
 
     public BookingAddServices findById(long id){
         return bookingAddServicesRepository.findById(id).orElseThrow(
@@ -22,6 +27,14 @@ public class BookingAddServicesService {
 
     public List<BookingAddServices> findAll(){
         return bookingAddServicesRepository.findAll();
+    }
+
+    public List<BookingAddServices> getAllByParams(Map<String, String> allParams) {
+        if(allParams.size()!=0) {
+            return bookingAddServicesRepository.findAll(filterService.fillFilter(allParams, BookingAddServices.class));
+        } else {
+            return bookingAddServicesRepository.findAll();
+        }
     }
 
     public BookingAddServices save(BookingAddServices bookingAddServices){

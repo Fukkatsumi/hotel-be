@@ -2,11 +2,13 @@ package com.netcracker.hotelbe.service;
 
 import com.netcracker.hotelbe.entity.Staff;
 import com.netcracker.hotelbe.repository.StaffRepository;
+import com.netcracker.hotelbe.service.filter.FilterService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class StaffService {
@@ -17,6 +19,9 @@ public class StaffService {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private FilterService filterService;
+
     public Staff findById(long id) {
         return staffRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException(String.valueOf(id))
@@ -25,6 +30,14 @@ public class StaffService {
 
     public List<Staff> findAll() {
         return staffRepository.findAll();
+    }
+
+    public List<Staff> getAllByParams(Map<String, String> allParams) {
+        if(allParams.size()!=0) {
+            return staffRepository.findAll(filterService.fillFilter(allParams, Staff.class));
+        } else {
+            return staffRepository.findAll();
+        }
     }
 
     public Staff save(Staff staff) {

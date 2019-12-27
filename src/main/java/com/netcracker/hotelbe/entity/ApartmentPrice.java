@@ -7,7 +7,7 @@ import lombok.Data;
 import javax.persistence.*;
 import javax.validation.constraints.Min;
 import java.io.Serializable;
-import java.sql.Timestamp;
+import java.sql.Date;
 
 @Data
 @Entity
@@ -26,12 +26,12 @@ public class ApartmentPrice implements Serializable {
     private int price;
 
     @Column(name = "start_period")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private Timestamp startPeriod;
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private Date startPeriod;
 
     @Column(name = "end_period")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private Timestamp endPeriod;
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private Date endPeriod;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "apartment_class_id")

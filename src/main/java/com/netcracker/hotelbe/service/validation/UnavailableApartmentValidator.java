@@ -7,7 +7,7 @@ import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
 import javax.validation.ConstraintViolation;
-import java.sql.Timestamp;
+import java.sql.Date;
 import java.util.Set;
 
 @Service
@@ -34,13 +34,16 @@ public class UnavailableApartmentValidator implements Validator {
 
         UnavailableApartment unavailableApartment = (UnavailableApartment) o;
 
-        Timestamp currentTime = new Timestamp(System.currentTimeMillis() - 120000);
+        Date currentTime = new Date(System.currentTimeMillis() - 120000);
 
         if (unavailableApartment.getStartDate().compareTo(currentTime) < 0) {
             errors.rejectValue("startDate","", "Start date cant be before current date ");
         }
         if (unavailableApartment.getEndDate().compareTo(currentTime) < 0) {
             errors.rejectValue("endDate","", "End date cant be before current date ");
+        }
+        if (unavailableApartment.getEndDate().compareTo(unavailableApartment.getStartDate()) < 0){
+            errors.rejectValue("endDate", "", "End date cant be before start date");
         }
     }
 }

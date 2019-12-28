@@ -12,6 +12,11 @@ public class ConditionService {
         Condition condition = new Condition();
         condition.setField(name);
 
+        if (value.equalsIgnoreCase("null")) {
+            condition.setOperation(Operation.IS_NULL);
+            return condition;
+        }
+
         String[] fullDate = value.split(" ");
         StringBuilder parsedDate = new StringBuilder();
         StringBuilder firstDate = new StringBuilder();
@@ -51,32 +56,36 @@ public class ConditionService {
 
         if (value.contentEquals(parsedDate)) {
             condition.setValue(value);
-            condition.setOperation(Operation.equals);
+            condition.setOperation(Operation.EQUALS);
         }
 
         if (firstDate.toString().matches(RegEx.DATE.getFullName()) && secondDate.toString().matches(RegEx.DATE.getFullName())) {
             parsedDate.append(firstDate).append(";").append(secondDate);
             condition.setValue(parsedDate);
-            condition.setOperation(Operation.between);
+            condition.setOperation(Operation.BETWEEN);
         }
         return condition;
     }
 
     public Condition getConditionFromString(String name, String value) {
-        return new Condition(name, value, Operation.equals);
+        return new Condition(name, value, Operation.LIKE);
     }
 
     public Condition getDefaultCondition() {
-        return new Condition("id", -1, Operation.equals);
+        return new Condition("id", -1, Operation.EQUALS);
     }
 
     public Condition getConditionFromEnum(String fieldName, Object value) {
-        return new Condition(fieldName, value, Operation.equals);
+        return new Condition(fieldName, value, Operation.EQUALS);
     }
 
     public Condition getConditionFromStringBoolean(String name, String value) {
         boolean val = value.equalsIgnoreCase("true") || value.equals("1");
 
-        return new Condition(name, val, Operation.equals);
+        return new Condition(name, val, Operation.EQUALS);
+    }
+
+    public Condition getConditionFromStringNumber(String name, String value){
+        return new Condition(name, value, Operation.EQUALS);
     }
 }

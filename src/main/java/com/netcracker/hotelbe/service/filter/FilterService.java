@@ -26,8 +26,11 @@ public class FilterService {
                 Field field = clazz.getDeclaredField(k);
                 if (field != null) {
                     Class fieldClass = field.getType();
-                    if (v.matches(RegEx.DATE.getFullName())
-                            && (fieldClass.equals(Date.class) || fieldClass.equals(Timestamp.class))) {
+                    if (v.matches(RegEx.LONG.getFullName())) {
+                        filter.addCondition(conditionService.getConditionFromStringNumber(k, v));
+                    } else if ((v.matches(RegEx.DATE.getFullName())
+                            && (fieldClass.equals(Date.class) || fieldClass.equals(Timestamp.class)))
+                            || v.equalsIgnoreCase("null")) {
                         filter.addCondition(conditionService.getConditionFromDate(k, v));
 
                     } else if (fieldClass.isEnum()) {

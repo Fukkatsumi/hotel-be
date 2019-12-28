@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("bookingAddServicesShip")
@@ -19,8 +20,8 @@ public class BookingAddServicesShipController {
     BookingAddServicesShipService bookingAddServicesShipService;
 
     @GetMapping
-    public ResponseEntity<List<BookingAddServicesShip>> getAllBookingAddServicesShip() {
-        return new ResponseEntity<>(bookingAddServicesShipService.findAll(), HttpStatus.OK);
+    public ResponseEntity<List<BookingAddServicesShip>> getAllBookingAddServicesShip(@RequestParam Map<String,String> allParams) {
+        return new ResponseEntity<>(bookingAddServicesShipService.getAllByParams(allParams), HttpStatus.OK);
     }
 
     @GetMapping("/{id}")

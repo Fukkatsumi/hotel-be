@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("staff")
@@ -20,8 +21,8 @@ public class StaffController {
     private StaffService staffService;
 
     @GetMapping
-    public ResponseEntity<List<Staff>> getAllStaff() {
-        return new ResponseEntity<>(staffService.findAll(), HttpStatus.OK);
+    public ResponseEntity<List<Staff>> getAllStaff(@RequestParam Map<String,String> allParams) {
+        return new ResponseEntity<>(staffService.getAllByParams(allParams), HttpStatus.OK);
     }
 
     @GetMapping("/{id}")

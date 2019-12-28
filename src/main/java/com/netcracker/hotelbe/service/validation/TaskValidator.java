@@ -1,6 +1,8 @@
 package com.netcracker.hotelbe.service.validation;
 
+import com.netcracker.hotelbe.entity.Staff;
 import com.netcracker.hotelbe.entity.Task;
+import com.netcracker.hotelbe.service.StaffService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.Errors;
@@ -15,6 +17,9 @@ public class TaskValidator implements Validator {
 
     @Autowired
     private javax.validation.Validator JValidator;
+
+    @Autowired
+    private StaffService staffService;
 
     @Override
     public boolean supports(Class<?> aClass) {
@@ -35,35 +40,38 @@ public class TaskValidator implements Validator {
         );
 
         //Spring validation
-        Task task = (Task)o;
+        Task task = (Task) o;
         //120000ms - is 2 minutes, it was added to compensate server delay
         Timestamp currentTime = new Timestamp(System.currentTimeMillis() - 120000);
 
-        if(task.getStart().compareTo(currentTime) < 0){
-            errors.rejectValue("start","", "Start date cant be before current date ");
+        if (task.getStart().compareTo(currentTime) < 0) {
+            errors.rejectValue("start", "", "Start date cant be before current date ");
         }
-        if(task.getEnd().compareTo(currentTime) < 0){
-            errors.rejectValue("end","", "End date cant be before current date ");
+        if (task.getEnd().compareTo(currentTime) < 0) {
+            errors.rejectValue("end", "", "End date cant be before current date ");
         }
-        if(task.getEnd().compareTo(task.getStart()) < 0){
-            errors.rejectValue("end","", "End date cant be before Start date");
+        if (task.getEnd().compareTo(task.getStart()) < 0) {
+            errors.rejectValue("end", "", "End date cant be before Start date");
         }
 
 
-
-
-        if(task.getComplete() != null )
-            if (task.getComplete().compareTo(task.getAccept()) < 0){
-                errors.rejectValue("complete","", "Complete date cant be before Start date");
+        if (task.getComplete() != null)
+            if (task.getComplete().compareTo(task.getAccept()) < 0) {
+                errors.rejectValue("complete", "", "Complete date cant be before Start date");
             }
 
-        if(task.getExecutor() != null)
-            if(task.getExecutor().isActive()){
-                errors.rejectValue("executor","", "Executor should be active");
+        if (task.getExecutor() != null) {
+            Staff executor = staffService.findById(task.getExecutor().getId());
+            if (!executor.isActive()) {
+                errors.rejectValue("executor", "", "Executor should be active");
             }
+        }
 
-        if(task.getCreator().isActive()){
-            errors.rejectValue("creator","", "Creator should be active");
+        if (task.getCreator() != null) {
+            Staff creator = staffService.findById(task.getCreator().getId());
+            if (!creator.isActive()) {
+                errors.rejectValue("creator", "", "Creator should be active");
+            }
         }
     }
 }

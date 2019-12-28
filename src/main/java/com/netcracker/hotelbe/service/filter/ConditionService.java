@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class ConditionService {
 
-    public Condition getConditionFromDate(final String name, final String value){
+    public Condition getConditionFromDate(final String name, final String value) {
         Condition condition = new Condition();
         condition.setField(name);
 
@@ -62,15 +62,21 @@ public class ConditionService {
         return condition;
     }
 
-    public Condition getConditionFromString(String name, String value){
+    public Condition getConditionFromString(String name, String value) {
         return new Condition(name, value, Operation.equals);
     }
 
-    public Condition getDefaultCondition(){
+    public Condition getDefaultCondition() {
         return new Condition("id", -1, Operation.equals);
     }
 
-    public Condition getConditionFromEnum(String fieldName, Object value){
-       return new Condition(fieldName, value, Operation.equals);
+    public Condition getConditionFromEnum(String fieldName, Object value) {
+        return new Condition(fieldName, value, Operation.equals);
+    }
+
+    public Condition getConditionFromStringBoolean(String name, String value) {
+        boolean val = value.equalsIgnoreCase("true") || value.equals("1");
+
+        return new Condition(name, val, Operation.equals);
     }
 }

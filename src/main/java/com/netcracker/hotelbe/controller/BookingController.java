@@ -26,8 +26,8 @@ public class BookingController {
     private BookingService bookingService;
 
     @GetMapping
-    public ResponseEntity<List<Booking>> getAll() {
-        return new ResponseEntity<>(bookingService.getAll(), HttpStatus.OK);
+    public ResponseEntity<List<Booking>> getAll(@RequestParam Map<String,String> allParams) {
+        return new ResponseEntity<>(bookingService.getAllByParams(allParams), HttpStatus.OK);
     }
 
     @PostMapping

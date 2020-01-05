@@ -4,6 +4,7 @@ import com.netcracker.hotelbe.entity.ApartmentClass;
 import com.netcracker.hotelbe.entity.ApartmentPrice;
 import com.netcracker.hotelbe.repository.ApartmentPriceRepository;
 import com.netcracker.hotelbe.service.filter.FilterService;
+import com.netcracker.hotelbe.utils.enums.MathOperation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
@@ -12,6 +13,7 @@ import org.springframework.validation.Validator;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import javax.persistence.EntityNotFoundException;
+import java.sql.Date;
 import java.util.List;
 import java.util.Map;
 
@@ -35,15 +37,21 @@ public class ApartmentPriceService {
     private EntityService entityService;
 
     public List<ApartmentPrice> findAll() {
-        return apartmentPriceRepository.findAll();
+        List<ApartmentPrice> apartmentPrices = apartmentPriceRepository.findAll();
+        apartmentPrices.forEach(this::correctingDate);
+        return apartmentPrices;
     }
 
     public List<ApartmentPrice> getAllByParams(Map<String, String> allParams) {
+        List<ApartmentPrice> apartmentPrices;
         if(allParams.size()!=0) {
-            return apartmentPriceRepository.findAll(filterService.fillFilter(allParams, ApartmentPrice.class));
+            apartmentPrices = apartmentPriceRepository.findAll(filterService.fillFilter(allParams, ApartmentPrice.class));
         } else {
-            return apartmentPriceRepository.findAll();
+            apartmentPrices = apartmentPriceRepository.findAll();
         }
+        apartmentPrices.forEach(this::correctingDate);
+
+        return apartmentPrices;
     }
 
     public ApartmentPrice save(ApartmentPrice apartmentPrice) {
@@ -54,9 +62,10 @@ public class ApartmentPriceService {
     }
 
     public ApartmentPrice findById(final Long id) {
-        return apartmentPriceRepository.findById(id).orElseThrow(
+        ApartmentPrice apartmentPrice = apartmentPriceRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException(String.valueOf(id))
         );
+        return correctingDate(apartmentPrice);
     }
 
     public ApartmentPrice update(ApartmentPrice apartmentPrice, final Long id) {
@@ -93,5 +102,15 @@ public class ApartmentPriceService {
         if (bindingResult.hasErrors()) {
             throw new MethodArgumentNotValidException(null, bindingResult);
         }
+    }
+
+    private ApartmentPrice correctingDate(ApartmentPrice apartmentPrice){
+        Date startPeriod = entityService.correctingDate(apartmentPrice.getStartPeriod(), MathOperation.PLUS, 1);
+        apartmentPrice.setStartPeriod(startPeriod);
+
+        Date endPeriod = entityService.correctingDate(apartmentPrice.getEndPeriod(), MathOperation.PLUS, 1);
+        apartmentPrice.setEndPeriod(endPeriod);
+
+        return apartmentPrice;
     }
 }

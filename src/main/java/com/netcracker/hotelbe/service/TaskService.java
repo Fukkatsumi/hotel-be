@@ -4,10 +4,13 @@ import com.netcracker.hotelbe.entity.Task;
 import com.netcracker.hotelbe.entity.enums.TaskStatus;
 import com.netcracker.hotelbe.repository.TaskRepository;
 import com.netcracker.hotelbe.service.filter.FilterService;
+import com.netcracker.hotelbe.utils.enums.MathOperation;
+import com.netcracker.hotelbe.utils.enums.UnitOfTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
 
@@ -25,21 +28,30 @@ public class TaskService {
     private EntityService entityService;
 
     public List<Task> findAll() {
-        return taskRepository.findAll();
+        List<Task> tasks = taskRepository.findAll();
+        tasks.forEach(this::correctingDate);
+
+        return  tasks;
     }
 
     public Task findById(Long id) {
-        return taskRepository.findById(id).orElseThrow(
+        Task task = taskRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException(String.valueOf(id))
         );
+
+        return correctingDate(task);
     }
 
     public List<Task> getAllByParams(Map<String, String> allParams) {
-        if(allParams.size()!=0) {
-            return taskRepository.findAll(filterService.fillFilter(allParams, Task.class));
+        List<Task> tasks;
+        if (allParams.size() != 0) {
+            tasks = taskRepository.findAll(filterService.fillFilter(allParams, Task.class));
         } else {
-            return taskRepository.findAll();
+            tasks = taskRepository.findAll();
         }
+        tasks.forEach(this::correctingDate);
+
+        return tasks;
     }
 
     public Task save(Task task) {
@@ -73,4 +85,20 @@ public class TaskService {
         return taskRepository.save((Task) entityService.fillFields(updates, task));
     }
 
+    private Task correctingDate(Task task) {
+
+        Timestamp startDate = entityService.correctingTimestamp(task.getStart(), MathOperation.PLUS, UnitOfTime.HOUR, +2);
+        task.setStart(startDate);
+
+        Timestamp endDate = entityService.correctingTimestamp(task.getEnd(), MathOperation.PLUS, UnitOfTime.HOUR, +2);
+        task.setEnd(endDate);
+
+        Timestamp acceptDate = entityService.correctingTimestamp(task.getAccept(), MathOperation.PLUS, UnitOfTime.HOUR, +2);
+        task.setAccept(acceptDate);
+
+        Timestamp completeDate = entityService.correctingTimestamp(task.getComplete(), MathOperation.PLUS, UnitOfTime.HOUR, +2);
+        task.setComplete(completeDate);
+
+        return task;
+    }
 }

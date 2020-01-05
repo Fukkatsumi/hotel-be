@@ -4,6 +4,8 @@ import com.netcracker.hotelbe.entity.*;
 import com.netcracker.hotelbe.repository.BookingRepository;
 import com.netcracker.hotelbe.service.filter.FilterService;
 import com.netcracker.hotelbe.utils.LoggingManager;
+import com.netcracker.hotelbe.utils.enums.MathOperation;
+import com.netcracker.hotelbe.utils.enums.UnitOfTime;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,11 +16,11 @@ import org.springframework.validation.Validator;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import javax.persistence.EntityNotFoundException;
+import java.sql.Date;
+import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.sql.Date;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -54,7 +56,10 @@ public class BookingService {
     private Validator bookingValidator;
 
     public List<Booking> getAll() {
-        return bookingRepository.findAll();
+        List<Booking> bookings = bookingRepository.findAll();
+        bookings.forEach(this::correctingDate);
+
+        return bookings;
     }
 
     public Booking save(final Booking booking) {
@@ -66,17 +71,23 @@ public class BookingService {
     }
 
     public Booking findById(Long id) {
-        return bookingRepository.findById(id).orElseThrow(
+        Booking booking = bookingRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException(String.valueOf(id))
         );
+
+        return correctingDate(booking);
     }
 
     public List<Booking> getAllByParams(Map<String, String> allParams) {
-        if(allParams.size()!=0) {
-            return bookingRepository.findAll(filterService.fillFilter(allParams, Booking.class));
+        List<Booking> bookings;
+        if (allParams.size() != 0) {
+            bookings = bookingRepository.findAll(filterService.fillFilter(allParams, Booking.class));
         } else {
-            return bookingRepository.findAll();
+            bookings = bookingRepository.findAll();
         }
+        bookings.forEach(this::correctingDate);
+
+        return bookings;
     }
 
     public Booking update(Booking booking, Long id) {
@@ -119,32 +130,32 @@ public class BookingService {
         Date startDate = toDate(startDateStr);
         Date endDate = toDate(endDateStr);
         if (isValidDates(startDate, endDate)) return null;
-        for (UnavailableApartment unavailableApartment:
-             unavailableApartmentList) {
+        for (UnavailableApartment unavailableApartment :
+                unavailableApartmentList) {
             if ((startDate.compareTo(unavailableApartment.getStartDate()) >= 0
                     && (endDate.compareTo(unavailableApartment.getEndDate()) <= 0))
                     || ((startDate.compareTo(unavailableApartment.getStartDate()) < 0)
                     && (endDate.compareTo(unavailableApartment.getEndDate()) <= 0)
-                    &&(endDate.compareTo(unavailableApartment.getStartDate()) >= 0))
-                    ||  ((startDate.compareTo(unavailableApartment.getStartDate()) >= 0)
+                    && (endDate.compareTo(unavailableApartment.getStartDate()) >= 0))
+                    || ((startDate.compareTo(unavailableApartment.getStartDate()) >= 0)
                     && (startDate.compareTo(unavailableApartment.getEndDate()) <= 0)
                     && (endDate.compareTo(unavailableApartment.getEndDate()) > 0))
-                    || ((startDate.compareTo(unavailableApartment.getStartDate()) < 0 )
-                    && (endDate.compareTo(unavailableApartment.getEndDate()) > 0)))  {
+                    || ((startDate.compareTo(unavailableApartment.getStartDate()) < 0)
+                    && (endDate.compareTo(unavailableApartment.getEndDate()) > 0))) {
                 apartmentList.remove(unavailableApartment.getApartment());
             }
         }
-        for (Booking booking:
+        for (Booking booking :
                 bookingList) {
             if ((startDate.compareTo(booking.getStartDate()) >= 0
                     && (endDate.compareTo(booking.getEndDate()) <= 0))
                     || ((startDate.compareTo(booking.getStartDate()) < 0)
                     && (endDate.compareTo(booking.getEndDate()) <= 0)
-                    &&(endDate.compareTo(booking.getStartDate()) >= 0))
-                    ||  ((startDate.compareTo(booking.getStartDate()) >= 0)
+                    && (endDate.compareTo(booking.getStartDate()) >= 0))
+                    || ((startDate.compareTo(booking.getStartDate()) >= 0)
                     && (startDate.compareTo(booking.getEndDate()) <= 0)
                     && (endDate.compareTo(booking.getEndDate()) > 0))
-                    || ((startDate.compareTo(booking.getStartDate()) < 0 )
+                    || ((startDate.compareTo(booking.getStartDate()) < 0)
                     && (endDate.compareTo(booking.getEndDate()) > 0))) {
                 removeApartment(apartmentList, booking);
             }
@@ -192,20 +203,33 @@ public class BookingService {
 
     private List<ApartmentClassCustom> toApartmentClassCustom(List<Apartment> apartmentList) {
         List<ApartmentClassCustom> apartmentClassCustomsList = new ArrayList<>();
-        for (ApartmentClass apartmentClass:
-             apartmentClassService.findAll()) {
+        for (ApartmentClass apartmentClass :
+                apartmentClassService.findAll()) {
             ApartmentClassCustom apartmentClassCustomTemp = new ApartmentClassCustom(apartmentClass);
             apartmentClassCustomsList.add(apartmentClassCustomTemp);
         }
-        for (Apartment apartment:
-             apartmentList) {
-            for (ApartmentClassCustom apClassCustom:
-                 apartmentClassCustomsList) {
-                if (apClassCustom.getApartmentClass().getId().equals(apartment.getApartmentClass().getId())){
-                    apClassCustom.setCountOfApartments(apClassCustom.getCountOfApartments()+1);
+        for (Apartment apartment :
+                apartmentList) {
+            for (ApartmentClassCustom apClassCustom :
+                    apartmentClassCustomsList) {
+                if (apClassCustom.getApartmentClass().getId().equals(apartment.getApartmentClass().getId())) {
+                    apClassCustom.setCountOfApartments(apClassCustom.getCountOfApartments() + 1);
                 }
             }
         }
         return apartmentClassCustomsList;
+    }
+
+    private Booking correctingDate(Booking booking) {
+        Date startDate = entityService.correctingDate(booking.getStartDate(), MathOperation.PLUS, 1);
+        booking.setStartDate(startDate);
+
+        Date endDate = entityService.correctingDate(booking.getEndDate(), MathOperation.PLUS, 1);
+        booking.setEndDate(endDate);
+
+        Timestamp createdDate = entityService.correctingTimestamp(booking.getCreatedDate(), MathOperation.PLUS, UnitOfTime.HOUR, +2);
+        booking.setCreatedDate(createdDate);
+
+        return booking;
     }
 }

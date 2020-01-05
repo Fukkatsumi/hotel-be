@@ -31,6 +31,9 @@ public class ApartmentPriceService {
     @Autowired
     private FilterService filterService;
 
+    @Autowired
+    private EntityService entityService;
+
     public List<ApartmentPrice> findAll() {
         return apartmentPriceRepository.findAll();
     }
@@ -75,6 +78,14 @@ public class ApartmentPriceService {
         );
 
         apartmentPriceRepository.delete(delete);
+    }
+
+    public ApartmentPrice patch(Long id, Map<String, Object> updates) {
+        ApartmentPrice apartmentPrice = apartmentPriceRepository.findById(id).orElseThrow(
+                () -> new EntityNotFoundException(String.valueOf(id))
+        );
+
+        return apartmentPriceRepository.save((ApartmentPrice) entityService.fillFields(updates, apartmentPrice));
     }
 
     public void validate(final ApartmentPrice apartmentPrice, BindingResult bindingResult) throws MethodArgumentNotValidException {

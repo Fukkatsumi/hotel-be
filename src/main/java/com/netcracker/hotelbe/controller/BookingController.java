@@ -66,4 +66,9 @@ public class BookingController {
     public ResponseEntity<List<ApartmentClassCustom>> findFreeApartments(@RequestParam String startDate, @RequestParam String endDate) {
         return new ResponseEntity<>(bookingService.findFreeApartments(startDate, endDate), HttpStatus.OK);
     }
+
+    @PatchMapping("/{id}")
+    public  ResponseEntity<Booking> patchById(@PathVariable("id") final Long id, @RequestBody Map<String, Object> updates) {
+        return new ResponseEntity<>(bookingService.patch(id, updates), HttpStatus.OK);
+    }
 }

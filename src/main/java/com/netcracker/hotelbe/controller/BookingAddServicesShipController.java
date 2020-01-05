@@ -54,4 +54,8 @@ public class BookingAddServicesShipController {
         return new ResponseEntity(HttpStatus.OK);
     }
 
+    @PatchMapping("/{id}")
+    public  ResponseEntity<BookingAddServicesShip> patchById(@PathVariable("id") final Long id, @RequestBody Map<String, Object> updates) {
+        return new ResponseEntity<>(bookingAddServicesShipService.patch(id, updates), HttpStatus.OK);
+    }
 }

@@ -70,4 +70,9 @@ public class TaskController {
         return new ResponseEntity(HttpStatus.OK);
     }
 
+    @PatchMapping("/{id}")
+    public  ResponseEntity<Task> patchById(@PathVariable("id") final Long id, @RequestBody Map<String, Object> updates) {
+        return new ResponseEntity<>(taskService.patch(id, updates), HttpStatus.OK);
+    }
+
 }

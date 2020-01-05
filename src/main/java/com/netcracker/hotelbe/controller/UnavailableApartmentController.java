@@ -63,4 +63,9 @@ public class UnavailableApartmentController {
         }
         return new ResponseEntity(HttpStatus.OK);
     }
+
+    @PatchMapping("/{id}")
+    public  ResponseEntity<UnavailableApartment> patchById(@PathVariable("id") final Long id, @RequestBody Map<String, Object> updates) {
+        return new ResponseEntity<>(unavailableApartmentService.patch(id, updates), HttpStatus.OK);
+    }
 }

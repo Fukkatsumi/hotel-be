@@ -57,5 +57,8 @@ public class UserController {
 
     }
 
-
+    @PatchMapping("/{id}")
+    public  ResponseEntity<User> patchById(@PathVariable("id") final Long id, @RequestBody Map<String, Object> updates) {
+        return new ResponseEntity<>(userService.patch(id, updates), HttpStatus.OK);
+    }
 }

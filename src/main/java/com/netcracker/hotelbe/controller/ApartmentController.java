@@ -57,4 +57,9 @@ public class ApartmentController {
         return new ResponseEntity(HttpStatus.OK);
     }
 
+    @PatchMapping("/{id}")
+    public  ResponseEntity<Apartment> patchById(@PathVariable("id") final Long id, @RequestBody Map<String, Object> updates) {
+        return new ResponseEntity<>(apartmentService.patch(id, updates), HttpStatus.OK);
+    }
+
 }

@@ -47,6 +47,9 @@ public class BookingService {
     private FilterService filterService;
 
     @Autowired
+    private EntityService entityService;
+
+    @Autowired
     @Qualifier("bookingValidator")
     private Validator bookingValidator;
 
@@ -99,6 +102,14 @@ public class BookingService {
         );
 
         bookingRepository.delete(delete);
+    }
+
+    public Booking patch(Long id, Map<String, Object> updates) {
+        Booking booking = bookingRepository.findById(id).orElseThrow(
+                () -> new EntityNotFoundException(String.valueOf(id))
+        );
+
+        return bookingRepository.save((Booking) entityService.fillFields(updates, booking));
     }
 
     public List<ApartmentClassCustom> findFreeApartments(String startDateStr, String endDateStr) {

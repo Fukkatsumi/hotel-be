@@ -21,6 +21,9 @@ public class TaskService {
     @Autowired
     private FilterService filterService;
 
+    @Autowired
+    private EntityService entityService;
+
     public List<Task> findAll() {
         return taskRepository.findAll();
     }
@@ -60,6 +63,14 @@ public class TaskService {
         Task task = taskRepository.findById(id).get();
         task.setStatus(TaskStatus.Canceled);
         taskRepository.save(task);
+    }
+
+    public Task patch(Long id, Map<String, Object> updates) {
+        Task task = taskRepository.findById(id).orElseThrow(
+                () -> new EntityNotFoundException(String.valueOf(id))
+        );
+
+        return taskRepository.save((Task) entityService.fillFields(updates, task));
     }
 
 }

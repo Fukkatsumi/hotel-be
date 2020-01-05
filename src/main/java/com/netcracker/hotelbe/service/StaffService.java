@@ -22,6 +22,9 @@ public class StaffService {
     @Autowired
     private FilterService filterService;
 
+    @Autowired
+    private EntityService entityService;
+
     public Staff findById(long id) {
         return staffRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException(String.valueOf(id))
@@ -60,5 +63,13 @@ public class StaffService {
             throw new EntityNotFoundException(String.valueOf(id));
         }
         staffRepository.setStatusById(false, id);
+    }
+
+    public Staff patch(Long id, Map<String, Object> updates) {
+        Staff staff = staffRepository.findById(id).orElseThrow(
+                () -> new EntityNotFoundException(String.valueOf(id))
+        );
+
+        return staffRepository.save((Staff) entityService.fillFields(updates, staff));
     }
 }

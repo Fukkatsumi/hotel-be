@@ -23,12 +23,15 @@ public class ApartmentService {
     @Autowired
     private FilterService filterService;
 
+    @Autowired
+    private EntityService entityService;
+
     public List<Apartment> getAll() {
         return apartmentRepository.findAll();
     }
 
     public List<Apartment> getAllByParams(Map<String, String> allParams) {
-        if(allParams.size()!=0) {
+        if (allParams.size() != 0) {
             return apartmentRepository.findAll(filterService.fillFilter(allParams, Apartment.class));
         } else {
             return apartmentRepository.findAll();
@@ -68,5 +71,13 @@ public class ApartmentService {
         );
 
         apartmentRepository.delete(delete);
+    }
+
+    public Apartment patch(Long id, Map<String, Object> updates) {
+        Apartment apartment = apartmentRepository.findById(id).orElseThrow(
+                () -> new EntityNotFoundException(String.valueOf(id))
+        );
+
+        return apartmentRepository.save((Apartment) entityService.fillFields(updates, apartment));
     }
 }

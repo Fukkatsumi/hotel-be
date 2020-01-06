@@ -23,7 +23,7 @@ public class ApartmentClassController {
     private ApartmentClassService apartmentClassService;
 
     @GetMapping()
-    public ResponseEntity<List<ApartmentClass>> getAll(@RequestParam Map<String,String> allParams) {
+    public ResponseEntity<List<ApartmentClass>> getAll(@RequestParam Map<String, String> allParams) {
         return new ResponseEntity<>(apartmentClassService.getAllByParams(allParams), HttpStatus.OK);
     }
 
@@ -64,5 +64,10 @@ public class ApartmentClassController {
         }
 
         return new ResponseEntity(HttpStatus.OK);
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<ApartmentClass> patchById(@PathVariable("id") final Long id, @RequestBody Map<String, Object> updates) {
+        return new ResponseEntity<>(apartmentClassService.patch(id, updates), HttpStatus.OK);
     }
 }

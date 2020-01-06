@@ -19,6 +19,9 @@ public class UserService {
     @Autowired
     private FilterService filterService;
 
+    @Autowired
+    private EntityService entityService;
+
     public List<User> findAll(){
         return userRepository.findAll();
     }
@@ -42,6 +45,14 @@ public class UserService {
             throw new EntityNotFoundException(String.valueOf(id));
         }
         userRepository.deleteById(id);
+    }
+
+    public User patch(Long id, Map<String, Object> updates) {
+        User user = userRepository.findById(id).orElseThrow(
+                () -> new EntityNotFoundException(String.valueOf(id))
+        );
+
+        return userRepository.save((User) entityService.fillFields(updates, user));
     }
 
     public User save(User user){

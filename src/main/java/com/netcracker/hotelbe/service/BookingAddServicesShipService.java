@@ -19,6 +19,9 @@ public class BookingAddServicesShipService {
     @Autowired
     private FilterService filterService;
 
+    @Autowired
+    private EntityService entityService;
+
     public BookingAddServicesShip findById(long id) {
         return bookingAddServicesShipRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException(String.valueOf(id))
@@ -57,6 +60,13 @@ public class BookingAddServicesShipService {
                 () -> new EntityNotFoundException(String.valueOf(id))
         );
         bookingAddServicesShipRepository.delete(delete);
+    }
 
+    public BookingAddServicesShip patch(Long id, Map<String, Object> updates) {
+        BookingAddServicesShip bookingAddServicesShip = bookingAddServicesShipRepository.findById(id).orElseThrow(
+                () -> new EntityNotFoundException(String.valueOf(id))
+        );
+
+        return bookingAddServicesShipRepository.save((BookingAddServicesShip) entityService.fillFields(updates, bookingAddServicesShip));
     }
 }

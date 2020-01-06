@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public interface ApartmentClassRepository extends JpaRepository<ApartmentClass, Long>, JpaSpecificationExecutor<ApartmentClass> {
@@ -13,9 +14,5 @@ public interface ApartmentClassRepository extends JpaRepository<ApartmentClass, 
     @Transactional(readOnly = true)
     @Override
     Optional<ApartmentClass> findById(Long id);
-
-    Optional<ApartmentClass> findFirstByNameClass(String name);
-
-    List<ApartmentClass> findByNameClassAndNumberOfCouchetteAndNumberOfRooms(String name, int numberOfCouchette, int numberOfRooms);
 
 }

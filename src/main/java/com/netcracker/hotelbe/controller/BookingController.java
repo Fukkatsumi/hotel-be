@@ -26,8 +26,8 @@ public class BookingController {
     private BookingService bookingService;
 
     @GetMapping
-    public ResponseEntity<List<Booking>> getAll() {
-        return new ResponseEntity<>(bookingService.getAll(), HttpStatus.OK);
+    public ResponseEntity<List<Booking>> getAll(@RequestParam Map<String,String> allParams) {
+        return new ResponseEntity<>(bookingService.getAllByParams(allParams), HttpStatus.OK);
     }
 
     @PostMapping
@@ -65,5 +65,10 @@ public class BookingController {
     @GetMapping("/find")
     public ResponseEntity<List<ApartmentClassCustom>> findFreeApartments(@RequestParam String startDate, @RequestParam String endDate) {
         return new ResponseEntity<>(bookingService.findFreeApartments(startDate, endDate), HttpStatus.OK);
+    }
+
+    @PatchMapping("/{id}")
+    public  ResponseEntity<Booking> patchById(@PathVariable("id") final Long id, @RequestBody Map<String, Object> updates) {
+        return new ResponseEntity<>(bookingService.patch(id, updates), HttpStatus.OK);
     }
 }

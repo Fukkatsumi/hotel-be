@@ -48,10 +48,14 @@ public class Filter implements Specification {
     private Predicate buildPredicate(Condition condition, Root root, CriteriaBuilder criteriaBuilder) {
         try {
             switch (condition.getOperation()) {
-                case equals:
+                case EQUALS:
                     return buildEqualPredicate(condition, root, criteriaBuilder);
-                case between:
+                case BETWEEN:
                     return buildBetweenPredicate(condition, root, criteriaBuilder);
+                case LIKE:
+                    return buildLikePredicate(condition, root, criteriaBuilder);
+                case IS_NULL:
+                    return buildIsNullPredicate(condition, root, criteriaBuilder);
                 default:
                     break;
             }
@@ -115,5 +119,13 @@ public class Filter implements Specification {
         } else {
             return criteriaBuilder.between(root.get(condition.getField()), firstValue, secondValue);
         }
+    }
+
+    private Predicate buildLikePredicate(Condition condition, Root root, CriteriaBuilder criteriaBuilder) throws IllegalArgumentException {
+        return criteriaBuilder.like(root.get(condition.getField()), "%" + condition.getValue().toString() + "%");
+    }
+
+    private Predicate buildIsNullPredicate(Condition condition, Root root, CriteriaBuilder criteriaBuilder){
+        return criteriaBuilder.isNull(root.get(condition.getField()));
     }
 }

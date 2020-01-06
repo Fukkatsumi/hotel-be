@@ -1,5 +1,6 @@
 package com.netcracker.hotelbe.service;
 
+import com.google.common.base.CaseFormat;
 import com.netcracker.hotelbe.entity.ApartmentClass;
 import com.netcracker.hotelbe.repository.ApartmentClassRepository;
 import com.netcracker.hotelbe.service.filter.FilterService;
@@ -11,11 +12,16 @@ import org.springframework.validation.Validator;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import javax.persistence.EntityNotFoundException;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Logger;
 
 @Service
 public class ApartmentClassService {
+
 
     @Autowired
     private ApartmentClassRepository apartmentClassRepository;
@@ -27,12 +33,16 @@ public class ApartmentClassService {
     @Autowired
     private FilterService filterService;
 
+    @Autowired
+    private EntityService entityService;
+
     public List<ApartmentClass> findAll() {
         return apartmentClassRepository.findAll();
     }
 
     public List<ApartmentClass> getAllByParams(Map<String, String> allParams) {
-        if(allParams.size()!=0) {
+
+        if (allParams.size() != 0) {
             return apartmentClassRepository.findAll(filterService.fillFilter(allParams, ApartmentClass.class));
         } else {
             return apartmentClassRepository.findAll();
@@ -49,11 +59,6 @@ public class ApartmentClassService {
         );
     }
 
-    public ApartmentClass findByName(final String name){
-        return apartmentClassRepository.findFirstByNameClass(name).orElseThrow(
-                () -> new EntityNotFoundException(String.valueOf(name))
-        );
-    }
 
     public ApartmentClass update(ApartmentClass apartmentClass, final Long id) {
         apartmentClassRepository.findById(id).orElseThrow(
@@ -73,6 +78,14 @@ public class ApartmentClassService {
         apartmentClassRepository.delete(delete);
     }
 
+    public ApartmentClass patch(final Long id, Map<String, Object> updates) {
+        ApartmentClass apartmentClass = apartmentClassRepository.findById(id).orElseThrow(
+                () -> new EntityNotFoundException(String.valueOf(id))
+        );
+
+        return apartmentClassRepository.save((ApartmentClass) entityService.fillFields(updates, apartmentClass));
+    }
+
     public void validate(final ApartmentClass apartmentClass, BindingResult bindingResult) throws MethodArgumentNotValidException {
         apartmentClassValidator.validate(apartmentClass, bindingResult);
         if (bindingResult.hasErrors()) {
@@ -80,15 +93,4 @@ public class ApartmentClassService {
         }
     }
 
-    public ApartmentClass findByFields(String name, int numberOfCouchette, int numberOfRooms) {
-        List<ApartmentClass> apartmentClasses = apartmentClassRepository.findByNameClassAndNumberOfCouchetteAndNumberOfRooms(name, numberOfCouchette, numberOfRooms);
-        ApartmentClass apartmentClass;
-        try {
-            apartmentClass = apartmentClasses.get(0);
-            apartmentClass.setId(null);
-        } catch (IndexOutOfBoundsException indexOutOfBoundsException) {
-            apartmentClass = null;
-        }
-        return apartmentClass;
-    }
 }

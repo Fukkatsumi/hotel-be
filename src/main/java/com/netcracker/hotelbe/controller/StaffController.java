@@ -33,15 +33,15 @@ public class StaffController {
     }
 
     @PostMapping
-    public ResponseEntity<Long> addStaff(@RequestBody @Valid Staff staff){
-        return new ResponseEntity<>(staffService.save(staff).getId(), HttpStatus.OK);
+    public String addStaff(@RequestBody @Valid Staff staff){
+             new ResponseEntity<>(staffService.save(staff).getId(), HttpStatus.OK);
+             return "Ok";
     }
 
 
     @PutMapping("/{id}")
     public ResponseEntity<Long> updateStaff(@RequestBody @Valid Staff staff, @PathVariable("id") Long id){
         staff.setId(id);
-        staff.setUser(userService.findById(id));
         return new ResponseEntity<>(staffService.save(staff).getId(), HttpStatus.OK);
     }
 
@@ -51,6 +51,7 @@ public class StaffController {
         return new ResponseEntity(HttpStatus.OK);
     }
 
+    //TODO PATCH mapping
 
 
 }

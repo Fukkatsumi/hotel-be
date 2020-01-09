@@ -1,9 +1,8 @@
 package com.netcracker.hotelbe.controller;
 
-import com.netcracker.hotelbe.entity.Apartment;
-import com.netcracker.hotelbe.entity.ApartmentClass;
 import com.netcracker.hotelbe.entity.ApartmentClassCustom;
 import com.netcracker.hotelbe.entity.Booking;
+import com.netcracker.hotelbe.entity.BookingServices;
 import com.netcracker.hotelbe.service.BookingService;
 import com.netcracker.hotelbe.utils.RuntimeExceptionHandler;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +25,7 @@ public class BookingController {
     private BookingService bookingService;
 
     @GetMapping
-    public ResponseEntity<List<Booking>> getAll(@RequestParam Map<String,String> allParams) {
+    public ResponseEntity<List<Booking>> getAll(@RequestParam Map<String, String> allParams) {
         return new ResponseEntity<>(bookingService.getAllByParams(allParams), HttpStatus.OK);
     }
 
@@ -68,7 +67,21 @@ public class BookingController {
     }
 
     @PatchMapping("/{id}")
-    public  ResponseEntity<Booking> patchById(@PathVariable("id") final Long id, @RequestBody Map<String, Object> updates) {
+    public ResponseEntity<Booking> patchById(@PathVariable("id") final Long id, @RequestBody Map<String, Object> updates) {
         return new ResponseEntity<>(bookingService.patch(id, updates), HttpStatus.OK);
+    }
+
+    @PostMapping("/{id}/services")
+    public ResponseEntity<Long> addService(@PathVariable("id") Long id, @RequestBody Map<String, Long> servicesId) {
+        try {
+            return new ResponseEntity<>(bookingService.addService(id, servicesId), HttpStatus.OK);
+        } catch (RuntimeException e) {
+            return RuntimeExceptionHandler.handlePSQLException(e);
+        }
+    }
+
+    @GetMapping("/{id}/services")
+    public ResponseEntity<List<BookingServices>> getServices(@PathVariable("id") Long id) {
+        return new ResponseEntity<>(bookingService.getServices(id), HttpStatus.OK);
     }
 }

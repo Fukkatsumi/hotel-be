@@ -21,6 +21,7 @@ import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -40,13 +41,16 @@ public class BookingService {
     private ApartmentService apartmentService;
 
     @Autowired
-    private ApartmentPriceService apartmentPriceService;
-
-    @Autowired
     private UserService userService;
 
     @Autowired
     private UnavailableApartmentService unavailableApartmentService;
+
+    @Autowired
+    private BookingAddServicesService bookingAddServicesService;
+
+    @Autowired
+    private BookingAddServicesShipService bookingAddServicesShipService;
 
     @Autowired
     private FilterService filterService;
@@ -89,7 +93,6 @@ public class BookingService {
             bookings = bookingRepository.findAll();
         }
         bookings.forEach(this::correctingDate);
-
         return bookings;
     }
 
@@ -132,9 +135,7 @@ public class BookingService {
         List<Apartment> apartmentList = apartmentService.getAll();
         Date startDate = toDate(startDateStr);
         Date endDate = toDate(endDateStr);
-        if (isValidDates(startDate, endDate)) {
-            return null;
-        }
+        if (isValidDates(startDate, endDate)) return null;
         for (UnavailableApartment unavailableApartment :
                 unavailableApartmentList) {
             if ((startDate.compareTo(unavailableApartment.getStartDate()) >= 0
@@ -213,7 +214,6 @@ public class BookingService {
             ApartmentClassCustom apartmentClassCustomTemp = new ApartmentClassCustom(apartmentClass);
             apartmentClassCustomsList.add(apartmentClassCustomTemp);
         }
-
         for (Apartment apartment :
                 apartmentList) {
             for (ApartmentClassCustom apClassCustom :
@@ -223,7 +223,6 @@ public class BookingService {
                 }
             }
         }
-
         return apartmentClassCustomsList;
     }
 
@@ -238,5 +237,38 @@ public class BookingService {
         booking.setCreatedDate(createdDate);
 
         return booking;
+    }
+
+    public Long addService(Long id, Map<String, Long> bookingAddServices) {
+
+        if (bookingAddServices.containsKey("id") && bookingAddServices.containsKey("countServices")) {
+            Booking booking = findById(id);
+            BookingAddServices bookingAddService = bookingAddServicesService.findById(bookingAddServices.get("id"));
+            int countServices = bookingAddServices.get("countServices").intValue();
+            if (booking != null && bookingAddService != null) {
+                BookingAddServicesShip bookingAddServicesShip = new BookingAddServicesShip();
+                bookingAddServicesShip.setBooking(booking);
+                bookingAddServicesShip.setBookingAddServices(bookingAddService);
+                bookingAddServicesShip.setCountServices(countServices);
+
+                return  bookingAddServicesShipService.save(bookingAddServicesShip).getId();
+            }
+        }
+        return (long) -1;
+    }
+
+    public List<BookingServices> getServices(Long id) {
+        Map<String, String> params = new HashMap<>();
+        params.put("booking", id.toString());
+        List<BookingServices> bookingServices = new ArrayList<>();
+        List<BookingAddServicesShip> bookingAddServicesShips = bookingAddServicesShipService.getAllByParams(params);
+        bookingAddServicesShips.forEach(bookingAddServicesShip -> {
+            BookingServices bookingService = new BookingServices();
+            bookingService.setBookingAddServices(bookingAddServicesShip.getBookingAddServices());
+            bookingService.setCountServices(bookingAddServicesShip.getCountServices());
+            bookingServices.add(bookingService);
+        });
+
+        return bookingServices;
     }
 }

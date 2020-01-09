@@ -31,19 +31,22 @@ public class BookingService {
     private static final Logger LOG = LogManager.getLogger(LoggingManager.class);
 
     @Autowired
-    BookingRepository bookingRepository;
+    private BookingRepository bookingRepository;
 
     @Autowired
-    ApartmentClassService apartmentClassService;
+    private ApartmentClassService apartmentClassService;
 
     @Autowired
-    ApartmentService apartmentService;
+    private ApartmentService apartmentService;
 
     @Autowired
-    UserService userService;
+    private ApartmentPriceService apartmentPriceService;
 
     @Autowired
-    UnavailableApartmentService unavailableApartmentService;
+    private UserService userService;
+
+    @Autowired
+    private UnavailableApartmentService unavailableApartmentService;
 
     @Autowired
     private FilterService filterService;
@@ -129,7 +132,9 @@ public class BookingService {
         List<Apartment> apartmentList = apartmentService.getAll();
         Date startDate = toDate(startDateStr);
         Date endDate = toDate(endDateStr);
-        if (isValidDates(startDate, endDate)) return null;
+        if (isValidDates(startDate, endDate)) {
+            return null;
+        }
         for (UnavailableApartment unavailableApartment :
                 unavailableApartmentList) {
             if ((startDate.compareTo(unavailableApartment.getStartDate()) >= 0
@@ -208,6 +213,7 @@ public class BookingService {
             ApartmentClassCustom apartmentClassCustomTemp = new ApartmentClassCustom(apartmentClass);
             apartmentClassCustomsList.add(apartmentClassCustomTemp);
         }
+
         for (Apartment apartment :
                 apartmentList) {
             for (ApartmentClassCustom apClassCustom :
@@ -217,6 +223,7 @@ public class BookingService {
                 }
             }
         }
+
         return apartmentClassCustomsList;
     }
 

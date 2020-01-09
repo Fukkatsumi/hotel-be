@@ -10,12 +10,13 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.sql.Date;
 import java.sql.Timestamp;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.logging.Logger;
 
 @Service
 public class EntityService {
-    private final static Logger LOG = Logger.getLogger("ApartmentClassService");
+    private final static Logger LOG = Logger.getLogger("EntityService");
 
     public Object fillFields(final Map<String, Object> fields, final Object targetObject) {
         Object object = getCopyFromObject(targetObject);
@@ -28,7 +29,22 @@ public class EntityService {
                 Field field = clazz.getDeclaredField(k);
                 Class fieldClass = field.getType();
                 Method method = clazz.getDeclaredMethod(String.valueOf(methodName), fieldClass);
-                method.invoke(object, v);
+                if (fieldClass.isEnum()) {
+                    Method getValues = fieldClass.getDeclaredMethod("values");
+                    Object obj = getValues.invoke(null);
+                    Arrays.stream((Object[]) obj)
+                            .filter(enumField -> enumField.toString().equalsIgnoreCase(v.toString()))
+                            .findAny()
+                            .ifPresent(enumValue -> {
+                                try {
+                                    method.invoke(object, enumValue);
+                                } catch (IllegalAccessException | InvocationTargetException e) {
+                                    LOG.warning("Method " + methodName.toString() + " not found or illegal argument!");
+                                }
+                            });
+                } else {
+                    method.invoke(object, v);
+                }
             } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException | NoSuchFieldException e) {
                 LOG.warning("Method " + methodName.toString() + " not found or illegal argument!");
             }

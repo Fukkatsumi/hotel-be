@@ -43,13 +43,8 @@ public class BookingValidator implements Validator {
         Booking booking = (Booking) o;
 
         Timestamp currentTime = new Timestamp(System.currentTimeMillis() - 120000);
+        booking.setCreatedDate(currentTime);
 
-        if (booking.getStartDate().compareTo(currentTime) < 0) {
-            errors.rejectValue("startDate","", "Start date cant be before current date ");
-        }
-        if (booking.getEndDate().compareTo(currentTime) < 0) {
-            errors.rejectValue("endDate","", "End date cant be before current date ");
-        }
         if (booking.getEndDate().compareTo(booking.getStartDate()) < 0){
             errors.rejectValue("endDate", "", "End date cant be before start date");
         }
@@ -68,6 +63,5 @@ public class BookingValidator implements Validator {
         }
         int totalPrice = bookingService.calculateBookingTotalPrice(booking);
         booking.setTotalPrice(totalPrice);
-        booking.setCreatedDate(currentTime);
     }
 }

@@ -78,6 +78,7 @@ public class BookingService {
         booking.setApartmentClass(apartmentClass);
         final User user = userService.findById(booking.getUser().getId());
         booking.setUser(user);
+        booking.setApartment(null);
         return bookingRepository.save(booking);
     }
 
@@ -114,6 +115,8 @@ public class BookingService {
         booking.setUser(user);
         booking.setId(id);
 
+        booking.setApartment(validateBookingApartment(booking.getApartment().getId(), booking));
+
         return bookingRepository.save(booking);
     }
 
@@ -131,26 +134,27 @@ public class BookingService {
         );
         if (updates.containsKey("apartment")) {
             long idApartment = Long.parseLong(updates.get("apartment").toString());
-            Apartment apartment = apartmentService.findById(idApartment);
-            ApartmentClass apartmentClass = booking.getApartmentClass();
-            if (!apartmentClass.equals(apartment.getApartmentClass())) {
-                throw new EntityNotFoundException("Apartment number does not entered correctly");
-            }
-            List<ApartmentClassCustom> apartmentClassCustomList = findFreeApartments(booking.getStartDate().toString(), booking.getEndDate().toString());
-            boolean isExistingApartment = false;
-            for (ApartmentClassCustom apartmentClassCustom:
-                 apartmentClassCustomList) {
-                if (apartmentClassCustom.getApartmentList().contains(apartment)) {
-                    updates.replace("apartment", apartment);
-                    isExistingApartment = true;
-                    break;
-                }
-            }
-            if (!isExistingApartment){
-                throw new EntityNotFoundException(String.valueOf(apartment.getId()) + ". Apartment is engaged");
-            }
+            Apartment apartment = validateBookingApartment(idApartment, booking);
+            updates.replace("apartment", apartment);
         }
         return bookingRepository.save((Booking) entityService.fillFields(updates, booking));
+    }
+
+    private Apartment validateBookingApartment(Long idApartment, Booking booking) {
+        Apartment apartment = apartmentService.findById(idApartment);
+        ApartmentClass apartmentClass = booking.getApartmentClass();
+        if (!apartmentClass.getId().equals(apartment.getApartmentClass().getId())) {
+            throw new EntityNotFoundException("Apartment number does not entered correctly");
+        }
+
+        List<ApartmentClassCustom> apartmentClassCustomList = findFreeApartments(booking.getStartDate().toString(), booking.getEndDate().toString());
+        for (ApartmentClassCustom apartmentClassCustom:
+                apartmentClassCustomList) {
+            if (apartmentClassCustom.getApartmentList().contains(apartment)) {
+                return apartment;
+            }
+        }
+        throw new EntityNotFoundException(idApartment + ". Apartment is engaged");
     }
 
     public int calculateBookingTotalPrice(Booking booking) {
@@ -203,7 +207,7 @@ public class BookingService {
                 } else if (startDatePrice.compareTo(startDateBooking) <= 0
                         && endDatePrice.compareTo(endDateBooking) <= 0
                         && endDatePrice.compareTo(startDateBooking) >= 0) {
-                    long daysOfPeriod = (apartmentPrice.getEndPeriod().getTime() - booking.getStartDate().getTime()) / (1000 * 3600 * 24) + 2;
+                    long daysOfPeriod = (apartmentPrice.getEndPeriod().getTime() - booking.getStartDate().getTime()) / (1000 * 3600 * 24) + 1;
                     priceAllServices += apartmentPrice.getPrice() * daysOfPeriod;
                     days -= daysOfPeriod;
                 }

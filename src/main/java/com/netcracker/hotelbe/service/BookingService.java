@@ -176,12 +176,12 @@ public class BookingService {
              apartmentPriceList) {
             apartmentPriceService.correctingDateMinus(apartmentPrice);
         }
-        priceAllServices = countDaysInApartmentPrice(days, apartmentPriceList, booking, priceAllServices);
+        priceAllServices = countPriceOnAllDays(days, apartmentPriceList, booking, priceAllServices);
 
         return priceAllServices;
     }
 
-    private int countDaysInApartmentPrice(long days, List<ApartmentPrice> apartmentPriceList, Booking booking, int priceAllServices) {
+    private int countPriceOnAllDays(long days, List<ApartmentPrice> apartmentPriceList, Booking booking, int priceAllServices) {
         LocalDateTime endDateBooking = booking.getEndDate().toLocalDate().atStartOfDay();
         LocalDateTime startDateBooking = booking.getStartDate().toLocalDate().atStartOfDay();
         while (days > 0) {

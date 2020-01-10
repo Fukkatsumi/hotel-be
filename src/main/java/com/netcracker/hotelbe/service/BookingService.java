@@ -20,7 +20,9 @@ import java.sql.Date;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Period;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -182,13 +184,13 @@ public class BookingService {
     }
 
     private int countPriceOnAllDays(long days, List<ApartmentPrice> apartmentPriceList, Booking booking, int priceAllServices) {
-        LocalDateTime endDateBooking = booking.getEndDate().toLocalDate().atStartOfDay();
-        LocalDateTime startDateBooking = booking.getStartDate().toLocalDate().atStartOfDay();
+        LocalDate endDateBooking = booking.getEndDate().toLocalDate();
+        LocalDate startDateBooking = booking.getStartDate().toLocalDate();
         while (days > 0) {
             for (ApartmentPrice apartmentPrice :
                     apartmentPriceList) {
-                LocalDateTime endDatePrice = apartmentPrice.getEndPeriod().toLocalDate().atStartOfDay();
-                LocalDateTime startDatePrice = apartmentPrice.getStartPeriod().toLocalDate().atStartOfDay();
+                LocalDate endDatePrice = apartmentPrice.getEndPeriod().toLocalDate();
+                LocalDate startDatePrice = apartmentPrice.getStartPeriod().toLocalDate();
                 if (startDatePrice.compareTo(startDateBooking) >= 0
                         && (endDatePrice.compareTo(endDateBooking)) <= 0) {
                     long daysOfPeriod = (apartmentPrice.getEndPeriod().getTime() - apartmentPrice.getStartPeriod().getTime()) / (1000 * 3600 * 24) + 1;
@@ -201,13 +203,15 @@ public class BookingService {
                 } else if (startDatePrice.compareTo(startDateBooking) >= 0
                         && endDatePrice.compareTo(endDateBooking) >= 0
                         && startDatePrice.compareTo(endDateBooking) <= 0) {
-                    long daysOfPeriod = (booking.getEndDate().getTime() - apartmentPrice.getStartPeriod().getTime()) / (1000 * 3600 * 24) + 1;
+                    Period period = Period.between(startDatePrice, endDateBooking);
+                    Integer daysOfPeriod = period.getDays() + 1;
                     priceAllServices += apartmentPrice.getPrice() * daysOfPeriod;
                     days -= daysOfPeriod;
                 } else if (startDatePrice.compareTo(startDateBooking) <= 0
                         && endDatePrice.compareTo(endDateBooking) <= 0
                         && endDatePrice.compareTo(startDateBooking) >= 0) {
-                    long daysOfPeriod = (apartmentPrice.getEndPeriod().getTime() - booking.getStartDate().getTime()) / (1000 * 3600 * 24) + 1;
+                    Period period = Period.between(startDateBooking, endDatePrice);
+                    Integer daysOfPeriod = period.getDays() + 1;
                     priceAllServices += apartmentPrice.getPrice() * daysOfPeriod;
                     days -= daysOfPeriod;
                 }

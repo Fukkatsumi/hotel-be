@@ -132,10 +132,18 @@ public class BookingService {
         if (updates.containsKey("apartment")) {
             long idApartment = Long.parseLong(updates.get("apartment").toString());
             Apartment apartment = apartmentService.findById(idApartment);
-            ApartmentClass apartmentClass = apartment.getApartmentClass();
-            if (apartmentClass.equals(booking.getApartment().getApartmentClass())) {
-                LOG.error("Apartment number does not entered correctly");
-                return null;
+            ApartmentClass apartmentClass = booking.getApartmentClass();
+            if (!apartmentClass.equals(apartment.getApartmentClass())) {
+                throw new EntityNotFoundException("Apartment number does not entered correctly");
+            }
+            List<ApartmentClassCustom> apartmentClassCustomList = findFreeApartments(booking.getStartDate().toString(), booking.getEndDate().toString());
+            for (ApartmentClassCustom apartmentClassCustom:
+                 apartmentClassCustomList) {
+                if (apartmentClassCustom.getApartmentList().contains(apartment)) {
+                    updates.replace("apartment", apartment);
+                } else {
+                    throw new EntityNotFoundException(String.valueOf(apartment.getId()) + ". Apartment is engaged");
+                }
             }
         }
         return bookingRepository.save((Booking) entityService.fillFields(updates, booking));
@@ -303,6 +311,7 @@ public class BookingService {
                     apartmentClassCustomsList) {
                 if (apClassCustom.getApartmentClass().getId().equals(apartment.getApartmentClass().getId())) {
                     apClassCustom.setCountOfApartments(apClassCustom.getCountOfApartments() + 1);
+                    apClassCustom.addToApartmentList(apartment);
                 }
             }
         }

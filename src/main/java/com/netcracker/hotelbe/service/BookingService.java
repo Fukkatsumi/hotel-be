@@ -137,13 +137,17 @@ public class BookingService {
                 throw new EntityNotFoundException("Apartment number does not entered correctly");
             }
             List<ApartmentClassCustom> apartmentClassCustomList = findFreeApartments(booking.getStartDate().toString(), booking.getEndDate().toString());
+            boolean isExistingApartment = false;
             for (ApartmentClassCustom apartmentClassCustom:
                  apartmentClassCustomList) {
                 if (apartmentClassCustom.getApartmentList().contains(apartment)) {
                     updates.replace("apartment", apartment);
-                } else {
-                    throw new EntityNotFoundException(String.valueOf(apartment.getId()) + ". Apartment is engaged");
+                    isExistingApartment = true;
+                    break;
                 }
+            }
+            if (!isExistingApartment){
+                throw new EntityNotFoundException(String.valueOf(apartment.getId()) + ". Apartment is engaged");
             }
         }
         return bookingRepository.save((Booking) entityService.fillFields(updates, booking));

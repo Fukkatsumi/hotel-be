@@ -11,6 +11,7 @@ import org.springframework.validation.Validator;
 
 import javax.validation.ConstraintViolation;
 import java.sql.Date;
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.Set;
 
@@ -41,7 +42,7 @@ public class BookingValidator implements Validator {
 
         Booking booking = (Booking) o;
 
-        Date currentTime = new Date(System.currentTimeMillis() - 120000);
+        Timestamp currentTime = new Timestamp(System.currentTimeMillis() - 120000);
 
         if (booking.getStartDate().compareTo(currentTime) < 0) {
             errors.rejectValue("startDate","", "Start date cant be before current date ");
@@ -65,5 +66,8 @@ public class BookingValidator implements Validator {
                 }
             }
         }
+        int totalPrice = bookingService.calculateBookingTotalPrice(booking);
+        booking.setTotalPrice(totalPrice);
+        booking.setCreatedDate(currentTime);
     }
 }

@@ -2,7 +2,7 @@ package com.netcracker.hotelbe.controller;
 
 import com.netcracker.hotelbe.entity.ApartmentClassCustom;
 import com.netcracker.hotelbe.entity.Booking;
-import com.netcracker.hotelbe.entity.BookingServices;
+import com.netcracker.hotelbe.entity.BookingAddServicesCustom;
 import com.netcracker.hotelbe.service.BookingService;
 import com.netcracker.hotelbe.utils.RuntimeExceptionHandler;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -81,7 +81,7 @@ public class BookingController {
     }
 
     @GetMapping("/{id}/services")
-    public ResponseEntity<List<BookingServices>> getServices(@PathVariable("id") Long id) {
+    public ResponseEntity<List<BookingAddServicesCustom>> getServices(@PathVariable("id") Long id) {
         return new ResponseEntity<>(bookingService.getServices(id), HttpStatus.OK);
     }
 }

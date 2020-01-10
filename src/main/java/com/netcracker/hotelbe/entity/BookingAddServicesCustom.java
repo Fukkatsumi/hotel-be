@@ -3,7 +3,7 @@ package com.netcracker.hotelbe.entity;
 import lombok.Data;
 
 @Data
-public class BookingServices {
+public class BookingAddServicesCustom {
     private BookingAddServices bookingAddServices;
     private int countServices;
 }

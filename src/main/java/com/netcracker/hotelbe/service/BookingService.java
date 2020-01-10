@@ -20,6 +20,7 @@ import java.sql.Date;
 import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -36,6 +37,9 @@ public class BookingService {
 
     @Autowired
     private ApartmentClassService apartmentClassService;
+
+    @Autowired
+    private ApartmentPriceService apartmentPriceService;
 
     @Autowired
     private ApartmentService apartmentService;
@@ -125,17 +129,94 @@ public class BookingService {
         Booking booking = bookingRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException(String.valueOf(id))
         );
-
+        if (updates.containsKey("apartment")) {
+            long idApartment = Long.parseLong(updates.get("apartment").toString());
+            Apartment apartment = apartmentService.findById(idApartment);
+            ApartmentClass apartmentClass = apartment.getApartmentClass();
+            if (apartmentClass.equals(booking.getApartment().getApartmentClass())) {
+                LOG.error("Apartment number does not entered correctly");
+                return null;
+            }
+        }
         return bookingRepository.save((Booking) entityService.fillFields(updates, booking));
+    }
+
+    public int calculateBookingTotalPrice(Booking booking) {
+        List<BookingAddServicesCustom> bookingAddServicesCustomList = getServices(booking.getId());
+        int priceAllServices = 0;
+        for (BookingAddServicesCustom bookingAddServicesCustom:
+             bookingAddServicesCustomList) {
+            int countServices = bookingAddServicesCustom.getCountServices();
+            BookingAddServices bookingAddServices = bookingAddServicesCustom.getBookingAddServices();
+            int priceService = bookingAddServices.getPrice();
+            priceAllServices += countServices * priceService;
+        }
+        long days =  (booking.getEndDate().getTime() - booking.getStartDate().getTime()) / (1000 * 3600 * 24) + 1;
+
+        Map<String, String> params = new HashMap<>();
+        params.put("apartmentClass", booking.getApartmentClass().getId().toString());
+        List<ApartmentPrice> apartmentPriceList = apartmentPriceService.getAllByParams(params);
+        for (ApartmentPrice apartmentPrice:
+             apartmentPriceList) {
+            apartmentPriceService.correctingDateMinus(apartmentPrice);
+        }
+        priceAllServices = countDaysInApartmentPrice(days, apartmentPriceList, booking, priceAllServices);
+
+        return priceAllServices;
+    }
+
+    private int countDaysInApartmentPrice(long days, List<ApartmentPrice> apartmentPriceList, Booking booking, int priceAllServices) {
+        LocalDateTime endDateBooking = booking.getEndDate().toLocalDate().atStartOfDay();
+        LocalDateTime startDateBooking = booking.getStartDate().toLocalDate().atStartOfDay();
+        while (days > 0) {
+            for (ApartmentPrice apartmentPrice :
+                    apartmentPriceList) {
+                LocalDateTime endDatePrice = apartmentPrice.getEndPeriod().toLocalDate().atStartOfDay();
+                LocalDateTime startDatePrice = apartmentPrice.getStartPeriod().toLocalDate().atStartOfDay();
+                if (startDatePrice.compareTo(startDateBooking) >= 0
+                        && (endDatePrice.compareTo(endDateBooking)) <= 0) {
+                    long daysOfPeriod = (apartmentPrice.getEndPeriod().getTime() - apartmentPrice.getStartPeriod().getTime()) / (1000 * 3600 * 24) + 1;
+                    priceAllServices += apartmentPrice.getPrice() * daysOfPeriod;
+                    days -= daysOfPeriod;
+                } else if (startDatePrice.compareTo(startDateBooking) <= 0
+                        && endDatePrice.compareTo(endDateBooking) >= 0) {
+                    priceAllServices += apartmentPrice.getPrice() * days;
+                    days = 0;
+                } else if (startDatePrice.compareTo(startDateBooking) >= 0
+                        && endDatePrice.compareTo(endDateBooking) >= 0
+                        && startDatePrice.compareTo(endDateBooking) <= 0) {
+                    long daysOfPeriod = (booking.getEndDate().getTime() - apartmentPrice.getStartPeriod().getTime()) / (1000 * 3600 * 24) + 1;
+                    priceAllServices += apartmentPrice.getPrice() * daysOfPeriod;
+                    days -= daysOfPeriod;
+                } else if (startDatePrice.compareTo(startDateBooking) <= 0
+                        && endDatePrice.compareTo(endDateBooking) <= 0
+                        && endDatePrice.compareTo(startDateBooking) >= 0) {
+                    long daysOfPeriod = (apartmentPrice.getEndPeriod().getTime() - booking.getStartDate().getTime()) / (1000 * 3600 * 24) + 2;
+                    priceAllServices += apartmentPrice.getPrice() * daysOfPeriod;
+                    days -= daysOfPeriod;
+                }
+            }
+            if (days > 0) {
+                return priceAllServices;
+            }
+        }
+        return priceAllServices;
     }
 
     public List<ApartmentClassCustom> findFreeApartments(String startDateStr, String endDateStr) {
         List<Booking> bookingList = getAll();
+        bookingList.forEach(this::correctingDateMinus);
         List<UnavailableApartment> unavailableApartmentList = unavailableApartmentService.getAll();
+        for (UnavailableApartment unavailableApartment:
+             unavailableApartmentList) {
+            unavailableApartmentService.correctingDateMinus(unavailableApartment);
+        }
         List<Apartment> apartmentList = apartmentService.getAll();
         Date startDate = toDate(startDateStr);
         Date endDate = toDate(endDateStr);
-        if (isValidDates(startDate, endDate)) return null;
+        if (isValidDates(startDate, endDate)) {
+            return null;
+        }
         for (UnavailableApartment unavailableApartment :
                 unavailableApartmentList) {
             if ((startDate.compareTo(unavailableApartment.getStartDate()) >= 0
@@ -202,6 +283,7 @@ public class BookingService {
 
     public void validate(final Booking booking, BindingResult bindingResult) throws MethodArgumentNotValidException {
         bookingValidator.validate(booking, bindingResult);
+
         if (bindingResult.hasErrors()) {
             throw new MethodArgumentNotValidException(null, bindingResult);
         }
@@ -214,6 +296,7 @@ public class BookingService {
             ApartmentClassCustom apartmentClassCustomTemp = new ApartmentClassCustom(apartmentClass);
             apartmentClassCustomsList.add(apartmentClassCustomTemp);
         }
+
         for (Apartment apartment :
                 apartmentList) {
             for (ApartmentClassCustom apClassCustom :
@@ -223,6 +306,7 @@ public class BookingService {
                 }
             }
         }
+
         return apartmentClassCustomsList;
     }
 
@@ -239,8 +323,21 @@ public class BookingService {
         return booking;
     }
 
-    public Long addService(Long id, Map<String, Long> bookingAddServices) {
 
+    private Booking correctingDateMinus(Booking booking) {
+        Date startDate = entityService.correctingDate(booking.getStartDate(), MathOperation.MINUS, 1);
+        booking.setStartDate(startDate);
+
+        Date endDate = entityService.correctingDate(booking.getEndDate(), MathOperation.MINUS, 1);
+        booking.setEndDate(endDate);
+
+        Timestamp createdDate = entityService.correctingTimestamp(booking.getCreatedDate(), MathOperation.MINUS, UnitOfTime.HOUR, 2);
+        booking.setCreatedDate(createdDate);
+
+        return booking;
+    }
+
+    public Long addService(Long id, Map<String, Long> bookingAddServices) {
         if (bookingAddServices.containsKey("id") && bookingAddServices.containsKey("countServices")) {
             Booking booking = findById(id);
             BookingAddServices bookingAddService = bookingAddServicesService.findById(bookingAddServices.get("id"));
@@ -257,18 +354,18 @@ public class BookingService {
         return (long) -1;
     }
 
-    public List<BookingServices> getServices(Long id) {
+    public List<BookingAddServicesCustom> getServices(Long id) {
         Map<String, String> params = new HashMap<>();
         params.put("booking", id.toString());
-        List<BookingServices> bookingServices = new ArrayList<>();
+        List<BookingAddServicesCustom> bookingAddServiceCustoms = new ArrayList<>();
         List<BookingAddServicesShip> bookingAddServicesShips = bookingAddServicesShipService.getAllByParams(params);
         bookingAddServicesShips.forEach(bookingAddServicesShip -> {
-            BookingServices bookingService = new BookingServices();
+            BookingAddServicesCustom bookingService = new BookingAddServicesCustom();
             bookingService.setBookingAddServices(bookingAddServicesShip.getBookingAddServices());
             bookingService.setCountServices(bookingAddServicesShip.getCountServices());
-            bookingServices.add(bookingService);
+            bookingAddServiceCustoms.add(bookingService);
         });
 
-        return bookingServices;
+        return bookingAddServiceCustoms;
     }
 }

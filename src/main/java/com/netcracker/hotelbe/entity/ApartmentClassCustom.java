@@ -4,6 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ApartmentClassCustom {
+    /**
+     * @countOfApartments - quantity free apartments according to booked apartmentClass in "Booking" and booked apartments
+     * @apartmentClass - unique object
+     * @apatmemtList - list of apartments which are NOT booked in "Booking"
+     */
     private Integer countOfApartments;
     private ApartmentClass apartmentClass;
     private List<Apartment> apartmentList;

@@ -152,7 +152,7 @@ public class BookingService {
         List<ApartmentClassCustom> apartmentClassCustomList = findFreeApartments(booking.getStartDate().toString(), booking.getEndDate().toString());
         for (ApartmentClassCustom apartmentClassCustom:
                 apartmentClassCustomList) {
-            if (apartmentClassCustom.getApartmentList().contains(apartment)) {
+            if (apartmentClassCustom.getCountOfApartments() != 0 && apartmentClassCustom.getApartmentList().contains(apartment)) {
                 return apartment;
             }
         }
@@ -227,6 +227,7 @@ public class BookingService {
         List<Booking> bookingList = getAll();
         bookingList.forEach(this::correctingDateMinus);
         List<UnavailableApartment> unavailableApartmentList = unavailableApartmentService.getAll();
+        Map<String, Integer> apartmentClassReservedMap = new HashMap<>();
         for (UnavailableApartment unavailableApartment:
              unavailableApartmentList) {
             unavailableApartmentService.correctingDateMinus(unavailableApartment);
@@ -264,25 +265,19 @@ public class BookingService {
                     && (endDate.compareTo(booking.getEndDate()) > 0))
                     || ((startDate.compareTo(booking.getStartDate()) < 0)
                     && (endDate.compareTo(booking.getEndDate()) > 0))) {
-                removeApartment(apartmentList, booking);
-            }
-        }
-        return toApartmentClassCustom(apartmentList);
-    }
-
-    private void removeApartment(List<Apartment> apartmentList, Booking booking) {
-        ApartmentClass apartmentClass;
-        if (booking.getApartment() == null) {
-            apartmentClass = booking.getApartmentClass();
-            for (Apartment apartment :
-                    apartmentList) {
-                if (apartment.getApartmentClass() == apartmentClass) {
-                    apartmentList.remove(apartment);
-                    break;
+                if (booking.getApartment() == null) {
+                    if (apartmentClassReservedMap.containsKey(booking.getApartmentClass().getNameClass())) {
+                        Integer tempQuantity = apartmentClassReservedMap.get(booking.getApartmentClass().getNameClass());
+                        apartmentClassReservedMap.replace(booking.getApartmentClass().getNameClass(), ++tempQuantity);
+                    } else {
+                        apartmentClassReservedMap.put(booking.getApartmentClass().getNameClass(), 1);
+                    }
+                } else {
+                    apartmentList.remove(booking.getApartment());
                 }
             }
         }
-        apartmentList.remove(booking.getApartment());
+        return toApartmentClassCustom(apartmentList, apartmentClassReservedMap);
     }
 
     private Date toDate(String strDate) {
@@ -309,7 +304,7 @@ public class BookingService {
         }
     }
 
-    private List<ApartmentClassCustom> toApartmentClassCustom(List<Apartment> apartmentList) {
+    private List<ApartmentClassCustom> toApartmentClassCustom(List<Apartment> apartmentList, Map<String, Integer> apartmentClassReservedMap) {
         List<ApartmentClassCustom> apartmentClassCustomsList = new ArrayList<>();
         for (ApartmentClass apartmentClass :
                 apartmentClassService.findAll()) {
@@ -325,6 +320,13 @@ public class BookingService {
                     apClassCustom.setCountOfApartments(apClassCustom.getCountOfApartments() + 1);
                     apClassCustom.addToApartmentList(apartment);
                 }
+            }
+        }
+
+        for (ApartmentClassCustom apClassCustom :
+                apartmentClassCustomsList) {
+            if (apartmentClassReservedMap.containsKey(apClassCustom.getApartmentClass().getNameClass())) {
+                apClassCustom.setCountOfApartments(apClassCustom.getCountOfApartments() - apartmentClassReservedMap.get(apClassCustom.getApartmentClass().getNameClass()));
             }
         }
 

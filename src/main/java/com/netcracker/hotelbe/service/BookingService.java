@@ -68,6 +68,10 @@ public class BookingService {
     @Qualifier("bookingValidator")
     private Validator bookingValidator;
 
+    @Autowired
+    @Qualifier("bookingAddServiceValidator")
+    private Validator bookingAddServiceValidator;
+
     public List<Booking> getAll() {
         List<Booking> bookings = bookingRepository.findAll();
         bookings.forEach(this::correctingDate);
@@ -81,6 +85,10 @@ public class BookingService {
         final User user = userService.findById(booking.getUser().getId());
         booking.setUser(user);
         booking.setApartment(null);
+
+        int totalPrice = calculateBookingTotalPrice(booking);
+        booking.setTotalPrice(totalPrice);
+
         return bookingRepository.save(booking);
     }
 
@@ -119,6 +127,9 @@ public class BookingService {
 
         booking.setApartment(validateBookingApartment(booking.getApartment().getId(), booking));
 
+        int totalPrice = calculateBookingTotalPrice(booking);
+        booking.setTotalPrice(totalPrice);
+
         return bookingRepository.save(booking);
     }
 
@@ -150,7 +161,7 @@ public class BookingService {
         }
 
         List<ApartmentClassCustom> apartmentClassCustomList = findFreeApartments(booking.getStartDate().toString(), booking.getEndDate().toString());
-        for (ApartmentClassCustom apartmentClassCustom:
+        for (ApartmentClassCustom apartmentClassCustom :
                 apartmentClassCustomList) {
             if (apartmentClassCustom.getCountOfApartments() != 0 && apartmentClassCustom.getApartmentList().contains(apartment)) {
                 return apartment;
@@ -162,20 +173,20 @@ public class BookingService {
     public int calculateBookingTotalPrice(Booking booking) {
         List<BookingAddServicesCustom> bookingAddServicesCustomList = getServices(booking.getId());
         int priceAllServices = 0;
-        for (BookingAddServicesCustom bookingAddServicesCustom:
-             bookingAddServicesCustomList) {
+        for (BookingAddServicesCustom bookingAddServicesCustom :
+                bookingAddServicesCustomList) {
             int countServices = bookingAddServicesCustom.getCountServices();
             BookingAddServices bookingAddServices = bookingAddServicesCustom.getBookingAddServices();
             int priceService = bookingAddServices.getPrice();
             priceAllServices += countServices * priceService;
         }
-        long days =  (booking.getEndDate().getTime() - booking.getStartDate().getTime()) / (1000 * 3600 * 24) + 1;
+        long days = (booking.getEndDate().getTime() - booking.getStartDate().getTime()) / (1000 * 3600 * 24) + 1;
 
         Map<String, String> params = new HashMap<>();
         params.put("apartmentClass", booking.getApartmentClass().getId().toString());
         List<ApartmentPrice> apartmentPriceList = apartmentPriceService.getAllByParams(params);
-        for (ApartmentPrice apartmentPrice:
-             apartmentPriceList) {
+        for (ApartmentPrice apartmentPrice :
+                apartmentPriceList) {
             apartmentPriceService.correctingDateMinus(apartmentPrice);
         }
         priceAllServices = countPriceOnAllDays(days, apartmentPriceList, booking, priceAllServices);
@@ -228,8 +239,8 @@ public class BookingService {
         bookingList.forEach(this::correctingDateMinus);
         List<UnavailableApartment> unavailableApartmentList = unavailableApartmentService.getAll();
         Map<String, Integer> apartmentClassReservedMap = new HashMap<>();
-        for (UnavailableApartment unavailableApartment:
-             unavailableApartmentList) {
+        for (UnavailableApartment unavailableApartment :
+                unavailableApartmentList) {
             unavailableApartmentService.correctingDateMinus(unavailableApartment);
         }
         List<Apartment> apartmentList = apartmentService.getAll();
@@ -304,6 +315,14 @@ public class BookingService {
         }
     }
 
+    public void validate(final Map<String, Long> values, BindingResult bindingResult) throws MethodArgumentNotValidException {
+        bookingAddServiceValidator.validate(values, bindingResult);
+
+        if (bindingResult.hasErrors()) {
+            throw new MethodArgumentNotValidException(null, bindingResult);
+        }
+    }
+
     private List<ApartmentClassCustom> toApartmentClassCustom(List<Apartment> apartmentList, Map<String, Integer> apartmentClassReservedMap) {
         List<ApartmentClassCustom> apartmentClassCustomsList = new ArrayList<>();
         for (ApartmentClass apartmentClass :
@@ -361,20 +380,19 @@ public class BookingService {
     }
 
     public Long addService(Long id, Map<String, Long> bookingAddServices) {
-        if (bookingAddServices.containsKey("id") && bookingAddServices.containsKey("countServices")) {
-            Booking booking = findById(id);
-            BookingAddServices bookingAddService = bookingAddServicesService.findById(bookingAddServices.get("id"));
-            int countServices = bookingAddServices.get("countServices").intValue();
-            if (booking != null && bookingAddService != null) {
-                BookingAddServicesShip bookingAddServicesShip = new BookingAddServicesShip();
-                bookingAddServicesShip.setBooking(booking);
-                bookingAddServicesShip.setBookingAddServices(bookingAddService);
-                bookingAddServicesShip.setCountServices(countServices);
+        Booking booking = findById(id);
+        BookingAddServices bookingAddService = bookingAddServicesService.findById(bookingAddServices.get("id"));
 
-                return  bookingAddServicesShipService.save(bookingAddServicesShip).getId();
-            }
-        }
-        return (long) -1;
+        int countServices = bookingAddServices.get("countServices").intValue();
+        BookingAddServicesShip bookingAddServicesShip = new BookingAddServicesShip();
+        bookingAddServicesShip.setBooking(booking);
+        bookingAddServicesShip.setBookingAddServices(bookingAddService);
+        bookingAddServicesShip.setCountServices(countServices);
+        Long bookingAddServicesId = bookingAddServicesShipService.save(bookingAddServicesShip).getId();
+        booking.setTotalPrice(calculateBookingTotalPrice(booking));
+        save(booking);
+
+        return bookingAddServicesId;
     }
 
     public List<BookingAddServicesCustom> getServices(Long id) {
@@ -390,5 +408,19 @@ public class BookingService {
         });
 
         return bookingAddServiceCustoms;
+    }
+
+    public void deleteService(Long id, Long serviceId) throws Throwable {
+        Map<String, String> values = new HashMap<>();
+        values.put("booking", id.toString());
+        values.put("bookingAddServices", serviceId.toString());
+
+        BookingAddServicesShip bookingAddServicesShip = bookingAddServicesShipService.findOneByFilter(values);
+
+        bookingAddServicesShipService.deleteById(bookingAddServicesShip.getId());
+
+        Booking booking = findById(id);
+        booking.setTotalPrice(calculateBookingTotalPrice(booking));
+        save(booking);
     }
 }

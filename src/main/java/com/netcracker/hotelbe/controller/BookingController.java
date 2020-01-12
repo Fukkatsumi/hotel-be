@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
@@ -72,9 +73,10 @@ public class BookingController {
     }
 
     @PostMapping("/{id}/services")
-    public ResponseEntity<Long> addService(@PathVariable("id") Long id, @RequestBody Map<String, Long> servicesId) {
+    public ResponseEntity<Long> addService(@PathVariable("id") Long id, @RequestBody @Valid Map<String, Long> values, BindingResult bindingResult) throws MethodArgumentNotValidException {
+        bookingService.validate(values, bindingResult);
         try {
-            return new ResponseEntity<>(bookingService.addService(id, servicesId), HttpStatus.OK);
+            return new ResponseEntity<>(bookingService.addService(id, values), HttpStatus.OK);
         } catch (RuntimeException e) {
             return RuntimeExceptionHandler.handlePSQLException(e);
         }
@@ -83,5 +85,11 @@ public class BookingController {
     @GetMapping("/{id}/services")
     public ResponseEntity<List<BookingAddServicesCustom>> getServices(@PathVariable("id") Long id) {
         return new ResponseEntity<>(bookingService.getServices(id), HttpStatus.OK);
+    }
+
+    @DeleteMapping("/{id}/services/{serviceId}")
+    public ResponseEntity deleteService(@PathVariable Long id, @PathVariable Long serviceId) throws Throwable {
+        bookingService.deleteService(id, serviceId);
+        return new ResponseEntity(HttpStatus.OK);
     }
 }

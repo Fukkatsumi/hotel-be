@@ -40,6 +40,12 @@ public class BookingAddServicesShipService {
         }
     }
 
+    public BookingAddServicesShip findOneByFilter(Map<String, String> allParams) throws Throwable {
+        return (BookingAddServicesShip) bookingAddServicesShipRepository.findOne(filterService.fillFilter(allParams, BookingAddServicesShip.class)).orElseThrow(
+                () -> new EntityNotFoundException(allParams.toString())
+        );
+    }
+
     public BookingAddServicesShip save(BookingAddServicesShip bookingAddServices) {
         return bookingAddServicesShipRepository.save(bookingAddServices);
     }

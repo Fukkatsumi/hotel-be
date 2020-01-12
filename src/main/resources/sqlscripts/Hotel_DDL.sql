@@ -6,7 +6,7 @@ CREATE SCHEMA public;
 --apartmentStatus - current now
 CREATE TYPE apartmentStatus AS ENUM ('ReadyToCheckIn', 'OnRepair', 'NeedCleaning', 'Occupied');
 CREATE TYPE taskStatus AS ENUM ('OPEN', 'Started', 'Complete', 'Failed', 'Canceled');
-CREATE TYPE speciality AS ENUM ('Cleaner', 'Handyman', 'Manager', 'Hotel Administrator');
+CREATE TYPE speciality AS ENUM ('Cleaner', 'Handyman', 'Manager', 'Hotel_Administrator');
 CREATE TYPE userRole AS ENUM ('Client', 'Manager', 'Administrator', 'Worker');
 CREATE TYPE bookingStatus AS ENUM ('Created', 'CheckedIn', 'Closed', 'Canceled');
 

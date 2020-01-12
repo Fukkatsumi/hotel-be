@@ -22,7 +22,6 @@ public class ApartmentPrice implements Serializable {
     private Long id;
 
     @Column(name = "price")
-    @Min(value = 0, message = "Price cant be less then 0")
     private int price;
 
     @Column(name = "start_period")

@@ -113,4 +113,14 @@ public class ApartmentPriceService {
 
         return apartmentPrice;
     }
+
+    public ApartmentPrice correctingDateMinus(ApartmentPrice apartmentPrice){
+        Date startPeriod = entityService.correctingDate(apartmentPrice.getStartPeriod(), MathOperation.MINUS, 1);
+        apartmentPrice.setStartPeriod(startPeriod);
+
+        Date endPeriod = entityService.correctingDate(apartmentPrice.getEndPeriod(), MathOperation.MINUS, 1);
+        apartmentPrice.setEndPeriod(endPeriod);
+
+        return apartmentPrice;
+    }
 }

@@ -115,4 +115,14 @@ public class UnavailableApartmentService {
 
         return unavailableApartment;
     }
+
+    public UnavailableApartment correctingDateMinus(UnavailableApartment unavailableApartment){
+        Date startDate= entityService.correctingDate(unavailableApartment.getStartDate(), MathOperation.MINUS, 1);
+        unavailableApartment.setStartDate(startDate);
+
+        Date endDate = entityService.correctingDate(unavailableApartment.getEndDate(), MathOperation.MINUS, 1);
+        unavailableApartment.setEndDate(endDate);
+
+        return unavailableApartment;
+    }
 }

@@ -1,7 +1,8 @@
 package com.netcracker.hotelbe.service.filter;
 
 import com.netcracker.hotelbe.repository.filter.Condition;
-import com.netcracker.hotelbe.repository.filter.Operation;
+import com.netcracker.hotelbe.repository.filter.impl.ConditionImpl;
+import com.netcracker.hotelbe.repository.filter.enums.Operation;
 import com.netcracker.hotelbe.utils.enums.RegEx;
 import org.springframework.stereotype.Service;
 
@@ -9,7 +10,7 @@ import org.springframework.stereotype.Service;
 public class ConditionService {
 
     public Condition getConditionFromDate(final String name, final String value) {
-        Condition condition = new Condition();
+        Condition condition = new ConditionImpl();
         condition.setField(name);
 
         if (value.equalsIgnoreCase("null")) {
@@ -68,24 +69,24 @@ public class ConditionService {
     }
 
     public Condition getConditionFromString(String name, String value) {
-        return new Condition(name, value, Operation.LIKE);
+        return new ConditionImpl(name, value, Operation.LIKE);
     }
 
     public Condition getDefaultCondition() {
-        return new Condition("id", -1, Operation.EQUALS);
+        return new ConditionImpl("id", -1, Operation.EQUALS);
     }
 
     public Condition getConditionFromEnum(String fieldName, Object value) {
-        return new Condition(fieldName, value, Operation.EQUALS);
+        return new ConditionImpl(fieldName, value, Operation.EQUALS);
     }
 
     public Condition getConditionFromStringBoolean(String name, String value) {
         boolean val = value.equalsIgnoreCase("true") || value.equals("1");
 
-        return new Condition(name, val, Operation.EQUALS);
+        return new ConditionImpl(name, val, Operation.EQUALS);
     }
 
     public Condition getConditionFromStringNumber(String name, String value){
-        return new Condition(name, value, Operation.EQUALS);
+        return new ConditionImpl(name, value, Operation.EQUALS);
     }
 }

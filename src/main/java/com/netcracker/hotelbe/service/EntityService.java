@@ -62,17 +62,7 @@ public class EntityService {
         if (date == null) {
             return date;
         } else {
-            Date correctedDate = (Date) date.clone();
-            switch (operation) {
-                case PLUS:
-                    correctedDate.setTime(correctedDate.getTime() + dayShift * DAY);
-                    break;
-                case MINUS:
-                    correctedDate.setTime(correctedDate.getTime() - dayShift * DAY);
-                default:
-                    break;
-            }
-            return correctedDate;
+            return correctingDateWithLongFormat(date, operation, dayShift * DAY);
         }
 
     }
@@ -81,57 +71,54 @@ public class EntityService {
         if (timestamp == null) {
             return timestamp;
         } else {
-            Timestamp correctedDate = (Timestamp) timestamp.clone();
+            Timestamp correctedDate;
             switch (unitOfTime) {
                 case DAY:
-                    switch (operation) {
-                        case PLUS:
-                            correctedDate.setTime(correctedDate.getTime() + timeShift * DAY);
-                            break;
-                        case MINUS:
-                            correctedDate.setTime(correctedDate.getTime() - timeShift * DAY);
-                        default:
-                            break;
-                    }
+                    correctedDate = correctingTimestampWithLongFormat(timestamp, operation, timeShift * DAY);
                     break;
                 case HOUR:
-                    switch (operation) {
-                        case PLUS:
-                            correctedDate.setTime(correctedDate.getTime() + timeShift * HOUR);
-                            break;
-                        case MINUS:
-                            correctedDate.setTime(correctedDate.getTime() - timeShift * HOUR);
-                        default:
-                            break;
-                    }
+                    correctedDate = correctingTimestampWithLongFormat(timestamp, operation, timeShift * HOUR);
                     break;
                 case MINUTE:
-                    switch (operation) {
-                        case PLUS:
-                            correctedDate.setTime(correctedDate.getTime() + timeShift * MINUTE);
-                            break;
-                        case MINUS:
-                            correctedDate.setTime(correctedDate.getTime() - timeShift * MINUTE);
-                        default:
-                            break;
-                    }
+                    correctedDate = correctingTimestampWithLongFormat(timestamp, operation, timeShift * MINUTE);
                     break;
                 case SECOND:
-                    switch (operation) {
-                        case PLUS:
-                            correctedDate.setTime(correctedDate.getTime() + timeShift * SECOND);
-                            break;
-                        case MINUS:
-                            correctedDate.setTime(correctedDate.getTime() - timeShift * SECOND);
-                        default:
-                            break;
-                    }
+                    correctedDate = correctingTimestampWithLongFormat(timestamp, operation, timeShift * SECOND);
                     break;
                 default:
+                    correctedDate = (Timestamp) timestamp.clone();
                     break;
             }
             return correctedDate;
         }
+    }
+
+    private Date correctingDateWithLongFormat(Date date, MathOperation operation, Long timeShift) {
+        Date correctedDate = (Date) date.clone();
+        switch (operation) {
+            case PLUS:
+                correctedDate.setTime(correctedDate.getTime() + timeShift);
+                break;
+            case MINUS:
+                correctedDate.setTime(correctedDate.getTime() - timeShift);
+            default:
+                break;
+        }
+        return correctedDate;
+    }
+
+    private Timestamp correctingTimestampWithLongFormat(Timestamp timestamp, MathOperation operation, Long timeShift) {
+        Timestamp correctedDate = (Timestamp) timestamp.clone();
+        switch (operation) {
+            case PLUS:
+                correctedDate.setTime(correctedDate.getTime() + timeShift);
+                break;
+            case MINUS:
+                correctedDate.setTime(correctedDate.getTime() - timeShift);
+            default:
+                break;
+        }
+        return correctedDate;
     }
 
     private Object getCopyFromObject(final Object object) {

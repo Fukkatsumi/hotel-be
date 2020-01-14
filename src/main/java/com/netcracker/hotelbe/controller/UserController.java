@@ -31,6 +31,11 @@ public class UserController {
         return new ResponseEntity<>(userService.findById(id), HttpStatus.OK);
     }
 
+    @GetMapping(params = "login")
+    public ResponseEntity<User> getUserByLogin(@RequestParam String login){
+        return new ResponseEntity<>(userService.findByLogin(login), HttpStatus.OK);
+    }
+
     @PostMapping
     public ResponseEntity<Long> addUser(@RequestBody @Valid User user) {
         try {

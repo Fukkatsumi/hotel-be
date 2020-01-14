@@ -37,8 +37,9 @@ public class StaffController {
         } catch (RuntimeException e) {
             return RuntimeExceptionHandler.handlePSQLException(e);
         }
-    }
 
+
+    }
 
     @PutMapping("/{id}")
     public ResponseEntity<Long> updateStaff(@RequestBody @Valid Staff staff, @PathVariable("id") Long id) {
@@ -59,4 +60,5 @@ public class StaffController {
     public  ResponseEntity<Staff> patchById(@PathVariable("id") final Long id, @RequestBody Map<String, Object> updates) {
         return new ResponseEntity<>(staffService.patch(id, updates), HttpStatus.OK);
     }
+
 }

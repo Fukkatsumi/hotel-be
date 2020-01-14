@@ -1,12 +1,17 @@
 package com.netcracker.hotelbe.controller;
 
 
+
+import com.google.common.base.Throwables;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.apache.log4j.Priority;
+import org.postgresql.util.PSQLException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -47,4 +52,23 @@ public class CustomResponseEntityExceptionHandler extends ResponseEntityExceptio
         return new ResponseEntity<>(message, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(value = {UsernameNotFoundException.class})
+    protected ResponseEntity<Object> handleUsernameNotFoundException(UsernameNotFoundException e){
+        return new ResponseEntity<>(e.getMessage(), HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(value = {RuntimeException.class})
+    protected ResponseEntity<Object> handlePSQLException(RuntimeException runtimeException) {
+        Throwable rootCause = Throwables.getRootCause(runtimeException);
+        String logMessage;
+        String responseMessage = runtimeException.getMessage();
+        if (rootCause instanceof PSQLException) {
+            logMessage = rootCause.getMessage();
+            responseMessage = logMessage.split("Detail: ")[0];
+            if (logger.isErrorEnabled()) {
+                logger.error(logMessage);
+            }
+        }
+        return new ResponseEntity<>(responseMessage, HttpStatus.BAD_REQUEST);
+    }
 }

@@ -18,6 +18,11 @@ import java.util.logging.Logger;
 public class EntityService {
     private final static Logger LOG = Logger.getLogger("EntityService");
 
+    public static final long SECOND = 1000; // in milli-seconds.
+    public static final long MINUTE = 60 * SECOND;
+    public static final long HOUR = 60 * MINUTE;
+    public static final long DAY = 24 * HOUR;
+
     public Object fillFields(final Map<String, Object> fields, final Object targetObject) {
         Object object = getCopyFromObject(targetObject);
         Class clazz = object.getClass();
@@ -60,17 +65,17 @@ public class EntityService {
             Date correctedDate = (Date) date.clone();
             switch (operation) {
                 case PLUS:
-                    correctedDate.setDate(correctedDate.getDate() + dayShift);
+                    correctedDate.setTime(correctedDate.getTime() + dayShift * DAY);
                     break;
                 case MINUS:
-                    correctedDate.setDate(correctedDate.getDate() - dayShift);
+                    correctedDate.setTime(correctedDate.getTime() - dayShift * DAY);
                 default:
                     break;
             }
-        return correctedDate;
-    }
+            return correctedDate;
+        }
 
-}
+    }
 
     public Timestamp correctingTimestamp(Timestamp timestamp, MathOperation operation, UnitOfTime unitOfTime, int timeShift) {
         if (timestamp == null) {
@@ -81,10 +86,10 @@ public class EntityService {
                 case DAY:
                     switch (operation) {
                         case PLUS:
-                            correctedDate.setDate(correctedDate.getDate() + timeShift);
+                            correctedDate.setTime(correctedDate.getTime() + timeShift * DAY);
                             break;
                         case MINUS:
-                            correctedDate.setDate(correctedDate.getDate() - timeShift);
+                            correctedDate.setTime(correctedDate.getTime() - timeShift * DAY);
                         default:
                             break;
                     }
@@ -92,10 +97,10 @@ public class EntityService {
                 case HOUR:
                     switch (operation) {
                         case PLUS:
-                            correctedDate.setHours(correctedDate.getHours() + timeShift);
+                            correctedDate.setTime(correctedDate.getTime() + timeShift * HOUR);
                             break;
                         case MINUS:
-                            correctedDate.setHours(correctedDate.getHours() - timeShift);
+                            correctedDate.setTime(correctedDate.getTime() - timeShift * HOUR);
                         default:
                             break;
                     }
@@ -103,10 +108,10 @@ public class EntityService {
                 case MINUTE:
                     switch (operation) {
                         case PLUS:
-                            correctedDate.setMinutes(correctedDate.getMinutes() + timeShift);
+                            correctedDate.setTime(correctedDate.getTime() + timeShift * MINUTE);
                             break;
                         case MINUS:
-                            correctedDate.setMinutes(correctedDate.getMinutes() - timeShift);
+                            correctedDate.setTime(correctedDate.getTime() - timeShift * MINUTE);
                         default:
                             break;
                     }
@@ -114,10 +119,10 @@ public class EntityService {
                 case SECOND:
                     switch (operation) {
                         case PLUS:
-                            correctedDate.setSeconds(correctedDate.getSeconds() + timeShift);
+                            correctedDate.setTime(correctedDate.getTime() + timeShift * SECOND);
                             break;
                         case MINUS:
-                            correctedDate.setSeconds(correctedDate.getSeconds() - timeShift);
+                            correctedDate.setTime(correctedDate.getTime() - timeShift * SECOND);
                         default:
                             break;
                     }
@@ -131,7 +136,7 @@ public class EntityService {
 
     private Object getCopyFromObject(final Object object) {
         try {
-            Object copy = object.getClass().newInstance();
+            Object copy = object.getClass().getDeclaredConstructor().newInstance();
             Class clazz = copy.getClass();
             Field[] fields = object.getClass().getDeclaredFields();
             for (int i = 0; i < fields.length; i++) {
@@ -149,7 +154,7 @@ public class EntityService {
                 }
             }
             return copy;
-        } catch (InstantiationException | IllegalAccessException e) {
+        } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
             LOG.warning("Error copying object!");
             return object;
         }

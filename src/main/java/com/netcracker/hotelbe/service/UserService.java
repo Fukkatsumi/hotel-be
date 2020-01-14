@@ -40,6 +40,12 @@ public class UserService {
         );
     }
 
+    public User findByLogin(String login){
+        return userRepository.findByLogin(login).orElseThrow(
+                ()->new EntityNotFoundException("No entity with login=" + login + " found")
+        );
+    }
+
     public void deleteById(Long id){
         if (!userRepository.findById(id).isPresent()){
             throw new EntityNotFoundException(String.valueOf(id));

@@ -1,7 +1,7 @@
 package com.netcracker.hotelbe.service;
 
-import com.google.common.base.CaseFormat;
 import com.netcracker.hotelbe.entity.ApartmentClass;
+import com.netcracker.hotelbe.entity.ApartmentPrice;
 import com.netcracker.hotelbe.repository.ApartmentClassRepository;
 import com.netcracker.hotelbe.service.filter.FilterService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,12 +12,9 @@ import org.springframework.validation.Validator;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import javax.persistence.EntityNotFoundException;
-import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.logging.Logger;
 
 @Service
 public class ApartmentClassService {
@@ -25,6 +22,9 @@ public class ApartmentClassService {
 
     @Autowired
     private ApartmentClassRepository apartmentClassRepository;
+
+    @Autowired
+    private ApartmentPriceService apartmentPriceService;
 
     @Autowired
     @Qualifier("apartmentClassValidator")
@@ -93,4 +93,10 @@ public class ApartmentClassService {
         }
     }
 
+    public List<ApartmentPrice> getPrices(Long id) {
+        Map<String, String> values = new HashMap<>();
+        values.put("apartmentClass", String.valueOf(id));
+
+        return apartmentPriceService.getAllByParams(values);
+    }
 }

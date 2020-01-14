@@ -61,7 +61,6 @@ public class BookingValidator implements Validator {
                 }
             }
         }
-        int totalPrice = bookingService.calculateBookingTotalPrice(booking);
-        booking.setTotalPrice(totalPrice);
+
     }
 }

@@ -15,14 +15,14 @@ public class HotelBeApplication {
 		SpringApplication.run(HotelBeApplication.class, args);
 	}
 
-//	@Configuration
-//	static class ApplicationSecurity extends WebSecurityConfigurerAdapter {
-//
-//		@Override
-//		public void configure(WebSecurity web){
-//			web
-//					.ignoring()
-//					.antMatchers("/**");
-//		}
-//	}
+	@Configuration
+	static class ApplicationSecurity extends WebSecurityConfigurerAdapter {
+
+		@Override
+		public void configure(WebSecurity web){
+			web
+					.ignoring()
+					.antMatchers("/**");
+		}
+	}
 }

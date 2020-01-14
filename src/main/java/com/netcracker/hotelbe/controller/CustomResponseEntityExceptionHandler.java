@@ -5,6 +5,8 @@ package com.netcracker.hotelbe.controller;
 import com.google.common.base.Throwables;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
+import org.apache.log4j.Priority;
+import org.postgresql.util.PSQLException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -63,7 +65,7 @@ public class CustomResponseEntityExceptionHandler extends ResponseEntityExceptio
         if (rootCause instanceof PSQLException) {
             logMessage = rootCause.getMessage();
             responseMessage = logMessage.split("Detail: ")[0];
-            if (logger.isEnabledFor(Priority.ERROR)) {
+            if (logger.isErrorEnabled()) {
                 logger.error(logMessage);
             }
         }

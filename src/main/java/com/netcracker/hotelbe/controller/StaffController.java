@@ -39,6 +39,7 @@ public class StaffController {
         }
 
 
+    }
 
     @PutMapping("/{id}")
     public ResponseEntity<Long> updateStaff(@RequestBody @Valid Staff staff, @PathVariable("id") Long id) {
@@ -47,6 +48,7 @@ public class StaffController {
         } catch (RuntimeException e) {
             return RuntimeExceptionHandler.handlePSQLException(e);
         }
+    }
 
     @DeleteMapping("/{id}")
     public ResponseEntity deleteStaff(@PathVariable Long id) {

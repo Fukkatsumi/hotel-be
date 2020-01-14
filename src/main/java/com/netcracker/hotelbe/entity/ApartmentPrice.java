@@ -6,9 +6,8 @@ import lombok.Data;
 
 import javax.persistence.*;
 import javax.validation.constraints.Min;
-import javax.validation.constraints.NotNull;
 import java.io.Serializable;
-import java.sql.Timestamp;
+import java.sql.Date;
 
 @Data
 @Entity
@@ -18,25 +17,23 @@ import java.sql.Timestamp;
 public class ApartmentPrice implements Serializable {
 
     @Id
-    @NotNull
     @Column(name = "id")
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
 
     @Column(name = "price")
-    @Min(value = 0, message = "Price cant be less then 0")
     private int price;
 
     @Column(name = "start_period")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private Timestamp startPeriod;
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private Date startPeriod;
 
     @Column(name = "end_period")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private Timestamp endPeriod;
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private Date endPeriod;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "apartment_id")
+    @JoinColumn(name = "apartment_class_id")
     private ApartmentClass apartmentClass;
 
 }

@@ -3,19 +3,22 @@ package com.netcracker.hotelbe.service;
 import com.netcracker.hotelbe.entity.Apartment;
 import com.netcracker.hotelbe.entity.UnavailableApartment;
 import com.netcracker.hotelbe.repository.UnavailableApartmentRepository;
-import com.netcracker.hotelbe.utils.CustomEntityLogMessage;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
+import com.netcracker.hotelbe.service.filter.FilterService;
+import com.netcracker.hotelbe.utils.enums.MathOperation;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.Validator;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import javax.persistence.EntityNotFoundException;
+import java.sql.Date;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class UnavailableApartmentService {
-    private static Logger logger = LogManager.getLogger(ApartmentPriceService.class);
-    private final static String ENTITY_NAME = UnavailableApartment.class.getSimpleName();
 
     @Autowired
     private UnavailableApartmentRepository unavailableApartmentRepository;
@@ -23,66 +26,103 @@ public class UnavailableApartmentService {
     @Autowired
     private ApartmentService apartmentService;
 
-    public List<UnavailableApartment> getAll() {
-        logger.trace(String.format(CustomEntityLogMessage.FIND_ALL_ENTITY, ENTITY_NAME));
+    @Autowired
+    @Qualifier("unavailableApartmentValidator")
+    private Validator unavailableApartmentValidator;
 
-        final List<UnavailableApartment> unavailableApartments = unavailableApartmentRepository.findAll();
-        logger.info(String.format(CustomEntityLogMessage.FOUND_AMOUNT_ELEMENT, unavailableApartments.size()));
+    @Autowired
+    private FilterService filterService;
+
+    @Autowired
+    private EntityService entityService;
+
+    public List<UnavailableApartment> getAll() {
+        List<UnavailableApartment> unavailableApartments =  unavailableApartmentRepository.findAll();
+        unavailableApartments.forEach(this::correctingDate);
 
         return unavailableApartments;
     }
 
-    public Long save(UnavailableApartment unavailableApartment) {
-        logger.trace(String.format(CustomEntityLogMessage.SAVE_ENTITY, ENTITY_NAME));
+    public List<UnavailableApartment> getAllByParams(Map<String, String> allParams) {
+        List<UnavailableApartment> unavailableApartments;
+        if(allParams.size()!=0) {
+            unavailableApartments = unavailableApartmentRepository.findAll(filterService.fillFilter(allParams, UnavailableApartment.class));
+        } else {
+            unavailableApartments = unavailableApartmentRepository.findAll();
+        }
+        unavailableApartments.forEach(this::correctingDate);
 
+        return unavailableApartments;
+    }
+
+    public UnavailableApartment save(UnavailableApartment unavailableApartment) {
         final Apartment apartment = apartmentService.findById(unavailableApartment.getApartment().getId());
         unavailableApartment.setApartment(apartment);
 
-        final UnavailableApartment save = unavailableApartmentRepository.save(unavailableApartment);
-        final Long id = save.getId();
-        logger.trace(String.format(CustomEntityLogMessage.SAVE_ENTITY_WITH_ID, ENTITY_NAME, id));
-
-        return id;
+        return unavailableApartmentRepository.save(unavailableApartment);
     }
 
     public UnavailableApartment findById(final Long id) {
-        logger.trace(String.format(CustomEntityLogMessage.FIND_ENTITY_BY_ID, ENTITY_NAME, id));
-
-        return unavailableApartmentRepository.findById(id).orElseThrow(
+        UnavailableApartment unavailableApartment = unavailableApartmentRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException(String.valueOf(id))
         );
+
+        return correctingDate(unavailableApartment);
     }
 
-    public Long update(final UnavailableApartment unavailableApartment, final Long id) {
-        logger.trace(String.format(CustomEntityLogMessage.UPDATE_ENTITY, ENTITY_NAME));
-
-        final Apartment apartment = apartmentService.findById(unavailableApartment.getApartment().getId());
-        logger.trace(String.format(CustomEntityLogMessage.FOUND_ENTITY_WITH_ID, ENTITY_NAME, unavailableApartment.getApartment().getId()));
-
-        UnavailableApartment update = unavailableApartmentRepository.findById(id).orElseThrow(
+    public UnavailableApartment update(final UnavailableApartment unavailableApartment, final Long id) {
+        unavailableApartmentRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException(String.valueOf(id))
         );
-        logger.trace(String.format(CustomEntityLogMessage.FOUND_ENTITY_WITH_ID, ENTITY_NAME, unavailableApartment.getApartment().getId()));
 
-        update.setStartDate(unavailableApartment.getStartDate());
-        update.setEndDate(unavailableApartment.getEndDate());
-        update.setCauseDescription(unavailableApartment.getCauseDescription());
-        update.setApartment(apartment);
-        update = unavailableApartmentRepository.save(update);
-        logger.trace(String.format(CustomEntityLogMessage.UPDATED_ENTITY_SAVED, ENTITY_NAME));
+        final Apartment apartment = apartmentService.findById(unavailableApartment.getApartment().getId());
 
-        return update.getId();
+        unavailableApartment.setApartment(apartment);
+        unavailableApartment.setId(id);
+
+        return unavailableApartmentRepository.save(unavailableApartment);
     }
 
     public void deleteById(final Long id) {
-        logger.trace(String.format(CustomEntityLogMessage.DELETE_ENTITY_BY_ID, ENTITY_NAME, id));
-
         final UnavailableApartment delete = unavailableApartmentRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException(String.valueOf(id))
         );
-        logger.trace(String.format(CustomEntityLogMessage.FOUND_ENTITY_FOR_DELETE, ENTITY_NAME));
 
         unavailableApartmentRepository.delete(delete);
-        logger.trace(String.format(CustomEntityLogMessage.ENTITY_DELETED, ENTITY_NAME));
+    }
+
+    public UnavailableApartment patch(Long id, Map<String, Object> updates) {
+        UnavailableApartment unavailableApartment = unavailableApartmentRepository.findById(id).orElseThrow(
+                () -> new EntityNotFoundException(String.valueOf(id))
+        );
+
+        return unavailableApartmentRepository.save((UnavailableApartment) entityService.fillFields(updates, unavailableApartment));
+    }
+
+    public void validate(final UnavailableApartment unavailableApartment, BindingResult bindingResult) throws MethodArgumentNotValidException {
+        unavailableApartmentValidator.validate(unavailableApartment, bindingResult);
+        if (bindingResult.hasErrors()) {
+            throw new MethodArgumentNotValidException(null, bindingResult);
+        }
+    }
+
+    private UnavailableApartment correctingDate(UnavailableApartment unavailableApartment){
+        Date startDate= entityService.correctingDate(unavailableApartment.getStartDate(), MathOperation.PLUS, 1);
+        unavailableApartment.setStartDate(startDate);
+
+        Date endDate = entityService.correctingDate(unavailableApartment.getEndDate(), MathOperation.PLUS, 1);
+        unavailableApartment.setEndDate(endDate);
+
+        return unavailableApartment;
+    }
+
+    public UnavailableApartment correctingDateMinus(UnavailableApartment unavailableApartment){
+        Date startDate= entityService.correctingDate(unavailableApartment.getStartDate(), MathOperation.MINUS, 1);
+        unavailableApartment.setStartDate(startDate);
+
+        Date endDate = entityService.correctingDate(unavailableApartment.getEndDate(), MathOperation.MINUS, 1);
+        unavailableApartment.setEndDate(endDate);
+
+        return unavailableApartment;
     }
 }

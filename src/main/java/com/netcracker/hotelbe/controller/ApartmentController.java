@@ -2,9 +2,7 @@ package com.netcracker.hotelbe.controller;
 
 import com.netcracker.hotelbe.entity.Apartment;
 import com.netcracker.hotelbe.service.ApartmentService;
-import com.netcracker.hotelbe.utils.CustomEntityLogMessage;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
+import com.netcracker.hotelbe.utils.RuntimeExceptionHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -12,51 +10,56 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Map;
 
 @RestController
-@RequestMapping("/apartments")
+@RequestMapping("apartments")
 public class ApartmentController {
-    private static Logger logger = LogManager.getLogger(ApartmentController.class);
-    private final static String ENTITY_NAME = Apartment.class.getSimpleName();
 
     @Autowired
     private ApartmentService apartmentService;
 
     @GetMapping
-    public ResponseEntity<List<Apartment>> getAll() {
-        logger.info(String.format(CustomEntityLogMessage.REQUEST_FOR_GET_ALL_ENTITY, ENTITY_NAME));
-
-        return new ResponseEntity<>(apartmentService.getAll(), HttpStatus.OK);
+    public ResponseEntity<List<Apartment>> getAll(@RequestParam Map<String,String> allParams) {
+        return new ResponseEntity<>(apartmentService.getAllByParams(allParams), HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Apartment> getById(@PathVariable("id") final Long id) {
-        logger.info(String.format(CustomEntityLogMessage.REQUEST_FOR_GET_ENTITY_BY_ID, ENTITY_NAME, id));
-
         return new ResponseEntity<>(apartmentService.findById(id), HttpStatus.OK);
     }
 
     @PostMapping
-    public ResponseEntity<Long> create(@RequestBody @Valid Apartment apartment) {
-        logger.info(String.format(CustomEntityLogMessage.REQUEST_FOR_CREATE_ENTITY, ENTITY_NAME));
-
-        return new ResponseEntity<>(apartmentService.save(apartment), HttpStatus.CREATED);
+    public ResponseEntity<Apartment> add(@RequestBody @Valid Apartment apartment) {
+        try {
+            return new ResponseEntity<>(apartmentService.save(apartment), HttpStatus.CREATED);
+        } catch (RuntimeException e) {
+            return RuntimeExceptionHandler.handlePSQLException(e);
+        }
     }
 
-    @PutMapping("/{id}}")
-    public ResponseEntity<Long> update(@RequestBody @Valid Apartment apartment, @PathVariable("id") Long id) {
-        logger.info(String.format(CustomEntityLogMessage.REQUEST_FOR_UPDATE_ENTITY_BY_ID, ENTITY_NAME, apartment.getId()));
-
-        return new ResponseEntity<>(apartmentService.update(apartment, id), HttpStatus.OK);
+    @PutMapping("/{id}")
+    public ResponseEntity<Apartment> update(@RequestBody @Valid Apartment apartment, @PathVariable("id") Long id) {
+        try {
+            return new ResponseEntity<>(apartmentService.update(apartment, id), HttpStatus.OK);
+        } catch (RuntimeException e) {
+            return RuntimeExceptionHandler.handlePSQLException(e);
+        }
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity deleteById(@PathVariable("id") final Long id) {
-        logger.info(String.format(CustomEntityLogMessage.REQUEST_FOR_DELETE_ENTITY_BY_ID, ENTITY_NAME, id));
-
-        apartmentService.deleteById(id);
-
+        try {
+            apartmentService.deleteById(id);
+        } catch (RuntimeException e) {
+            return RuntimeExceptionHandler.handlePSQLException(e);
+        }
         return new ResponseEntity(HttpStatus.OK);
+    }
+
+    @PatchMapping("/{id}")
+    public  ResponseEntity<Apartment> patchById(@PathVariable("id") final Long id, @RequestBody Map<String, Object> updates) {
+        return new ResponseEntity<>(apartmentService.patch(id, updates), HttpStatus.OK);
     }
 
 }

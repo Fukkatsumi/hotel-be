@@ -1,79 +1,102 @@
 package com.netcracker.hotelbe.service;
 
 import com.netcracker.hotelbe.entity.ApartmentClass;
+import com.netcracker.hotelbe.entity.ApartmentPrice;
 import com.netcracker.hotelbe.repository.ApartmentClassRepository;
-import com.netcracker.hotelbe.utils.CustomEntityLogMessage;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
+import com.netcracker.hotelbe.service.filter.FilterService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.Validator;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import javax.persistence.EntityNotFoundException;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class ApartmentClassService {
-    private static Logger logger = LogManager.getLogger(ApartmentClassService.class);
-    private final static String ENTITY_NAME = ApartmentClass.class.getSimpleName();
+
 
     @Autowired
     private ApartmentClassRepository apartmentClassRepository;
 
+    @Autowired
+    private ApartmentPriceService apartmentPriceService;
+
+    @Autowired
+    @Qualifier("apartmentClassValidator")
+    private Validator apartmentClassValidator;
+
+    @Autowired
+    private FilterService filterService;
+
+    @Autowired
+    private EntityService entityService;
 
     public List<ApartmentClass> findAll() {
-        logger.trace(String.format(CustomEntityLogMessage.FIND_ALL_ENTITY, ENTITY_NAME));
-
-        final List<ApartmentClass> apartmentClasses = apartmentClassRepository.findAll();
-        logger.info(String.format(CustomEntityLogMessage.FOUND_AMOUNT_ELEMENT, apartmentClasses.size()));
-
-        return apartmentClasses;
+        return apartmentClassRepository.findAll();
     }
 
-    public Long save(final ApartmentClass apartmentClass) {
-        logger.trace(String.format(CustomEntityLogMessage.SAVE_ENTITY, ENTITY_NAME));
+    public List<ApartmentClass> getAllByParams(Map<String, String> allParams) {
 
-        final ApartmentClass save = apartmentClassRepository.save(apartmentClass);
-        final Long id = save.getId();
-        logger.trace(String.format(CustomEntityLogMessage.SAVE_ENTITY_WITH_ID, ENTITY_NAME, id));
+        if (allParams.size() != 0) {
+            return apartmentClassRepository.findAll(filterService.fillFilter(allParams, ApartmentClass.class));
+        } else {
+            return apartmentClassRepository.findAll();
+        }
+    }
 
-        return id;
+    public ApartmentClass save(final ApartmentClass apartmentClass) {
+        return apartmentClassRepository.save(apartmentClass);
     }
 
     public ApartmentClass findById(final Long id) {
-        logger.trace(String.format(CustomEntityLogMessage.FIND_ENTITY_BY_ID, ENTITY_NAME, id));
-
         return apartmentClassRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException(String.valueOf(id))
         );
     }
 
-    public Long update(final ApartmentClass apartmentClass, final Long id) {
-        logger.trace(String.format(CustomEntityLogMessage.UPDATE_ENTITY, ENTITY_NAME));
 
-        ApartmentClass update = apartmentClassRepository.findById(id).orElseThrow(
+    public ApartmentClass update(ApartmentClass apartmentClass, final Long id) {
+        apartmentClassRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException(String.valueOf(id))
         );
-        logger.trace(String.format(CustomEntityLogMessage.FOUND_ENTITY_WITH_ID, ENTITY_NAME, id));
 
-        update.setNameClass(apartmentClass.getNameClass());
-        update.setNumberOfRooms(apartmentClass.getNumberOfRooms());
-        update.setNumberOfCouchette(apartmentClass.getNumberOfCouchette());
+        apartmentClass.setId(id);
 
-        update = apartmentClassRepository.save(update);
-        logger.trace(String.format(CustomEntityLogMessage.UPDATED_ENTITY_SAVED, ENTITY_NAME));
-
-        return update.getId();
+        return apartmentClassRepository.save(apartmentClass);
     }
 
     public void deleteById(final Long id) {
-        logger.trace(String.format(CustomEntityLogMessage.DELETE_ENTITY_BY_ID, ENTITY_NAME, id));
-
         ApartmentClass delete = apartmentClassRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException(String.valueOf(id))
         );
-        logger.trace(String.format(CustomEntityLogMessage.FOUND_ENTITY_FOR_DELETE, ENTITY_NAME));
 
         apartmentClassRepository.delete(delete);
-        logger.trace(String.format(CustomEntityLogMessage.ENTITY_DELETED, ENTITY_NAME));
+    }
+
+    public ApartmentClass patch(final Long id, Map<String, Object> updates) {
+        ApartmentClass apartmentClass = apartmentClassRepository.findById(id).orElseThrow(
+                () -> new EntityNotFoundException(String.valueOf(id))
+        );
+
+        return apartmentClassRepository.save((ApartmentClass) entityService.fillFields(updates, apartmentClass));
+    }
+
+    public void validate(final ApartmentClass apartmentClass, BindingResult bindingResult) throws MethodArgumentNotValidException {
+        apartmentClassValidator.validate(apartmentClass, bindingResult);
+        if (bindingResult.hasErrors()) {
+            throw new MethodArgumentNotValidException(null, bindingResult);
+        }
+    }
+
+    public List<ApartmentPrice> getPrices(Long id) {
+        Map<String, String> values = new HashMap<>();
+        values.put("apartmentClass", String.valueOf(id));
+
+        return apartmentPriceService.getAllByParams(values);
     }
 }

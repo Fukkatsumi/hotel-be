@@ -1,78 +1,95 @@
 package com.netcracker.hotelbe.controller;
 
+import com.netcracker.hotelbe.entity.ApartmentClassCustom;
 import com.netcracker.hotelbe.entity.Booking;
+import com.netcracker.hotelbe.entity.BookingAddServicesCustom;
 import com.netcracker.hotelbe.service.BookingService;
-import org.apache.log4j.Logger;
+import com.netcracker.hotelbe.utils.RuntimeExceptionHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.util.List;
+import java.util.Map;
 
 
 @RestController
-@RequestMapping("booking")
+@RequestMapping("bookings")
 public class BookingController {
-    private final static Logger logger = Logger.getLogger(BookingController.class);
-    private final static String BOOKING_BY_ID_NOT_FOUND = "Booking by id: %d not found!";
 
     @Autowired
-    BookingService bookingService;
+    private BookingService bookingService;
 
-    @GetMapping("/all")
-    public ResponseEntity getAll() {
-        logger.info("Request for get all bookings");
-
-        return new ResponseEntity(bookingService.getAll(), HttpStatus.OK);
+    @GetMapping
+    public ResponseEntity<List<Booking>> getAll(@RequestParam Map<String, String> allParams) {
+        return new ResponseEntity<>(bookingService.getAllByParams(allParams), HttpStatus.OK);
     }
 
     @PostMapping
-    public ResponseEntity create(@RequestBody @Valid Booking booking) {
-        logger.info("Request for create booking");
-
-        return new ResponseEntity(bookingService.save(booking),
-                HttpStatus.CREATED);
-    }
-
-    @GetMapping("{id}")
-    public ResponseEntity getById(@PathVariable Long id) {
-        logger.info("Request for get booking by id: " + id);
-
-        Booking booking = bookingService.findById(id);
-        if (booking != null) {
-            return new ResponseEntity(booking, HttpStatus.OK);
-        } else {
-            logger.warn(String.format(BOOKING_BY_ID_NOT_FOUND, id));
-
-            return new ResponseEntity(HttpStatus.BAD_REQUEST);
+    public ResponseEntity<Booking> create(@RequestBody @Valid Booking booking, BindingResult bindingResult) throws MethodArgumentNotValidException {
+        bookingService.validate(booking, bindingResult);
+        try {
+            return new ResponseEntity<>(bookingService.save(booking),
+                    HttpStatus.CREATED);
+        } catch (RuntimeException e) {
+            return RuntimeExceptionHandler.handlePSQLException(e);
         }
     }
 
-    @PutMapping
-    public ResponseEntity update(@RequestBody @Valid Booking booking) {
-        logger.info("Request for update booking by id: " + booking.getId());
+    @GetMapping("/{id}")
+    public ResponseEntity<Booking> getById(@PathVariable("id") final Long id) {
+        return new ResponseEntity<>(bookingService.findById(id), HttpStatus.OK);
+    }
 
-        Long update = bookingService.update(booking);
-
-        if (update != 0) {
-            return new ResponseEntity(HttpStatus.OK);
-        } else {
-            logger.warn("Booking by id: " + booking.getId());
-            return new ResponseEntity(HttpStatus.BAD_REQUEST);
+    @PutMapping("/{id}")
+    public ResponseEntity<Booking> update(@RequestBody @Valid Booking booking, @PathVariable("id") final Long id, BindingResult bindingResult) throws MethodArgumentNotValidException {
+        bookingService.validate(booking, bindingResult);
+        try {
+            return new ResponseEntity<>(bookingService.update(booking, id), HttpStatus.OK);
+        } catch (RuntimeException e) {
+            return RuntimeExceptionHandler.handlePSQLException(e);
         }
     }
 
-    @DeleteMapping("{id}")
+    @DeleteMapping("/{id}")
     public ResponseEntity deleteById(@PathVariable Long id) {
-        logger.info("Request for delete booking by id: " +id);
+        bookingService.deleteById(id);
+        return new ResponseEntity(HttpStatus.OK);
+    }
 
-        boolean delete = bookingService.deleteById(id);
-        if (delete) {
-            return new ResponseEntity(HttpStatus.OK);
-        } else {
-            logger.warn(String.format(BOOKING_BY_ID_NOT_FOUND, id));
-            return new ResponseEntity(HttpStatus.BAD_REQUEST);
+    @GetMapping("/find")
+    public ResponseEntity<List<ApartmentClassCustom>> findFreeApartments(@RequestParam String startDate, @RequestParam String endDate) {
+        return new ResponseEntity<>(bookingService.findFreeApartments(startDate, endDate), HttpStatus.OK);
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<Booking> patchById(@PathVariable("id") final Long id, @RequestBody Map<String, Object> updates) {
+        return new ResponseEntity<>(bookingService.patch(id, updates), HttpStatus.OK);
+    }
+
+    @PostMapping("/{id}/services")
+    public ResponseEntity<Long> addService(@PathVariable("id") Long id, @RequestBody @Valid Map<String, Long> values, BindingResult bindingResult) throws MethodArgumentNotValidException {
+        bookingService.validate(values, bindingResult);
+        try {
+            return new ResponseEntity<>(bookingService.addService(id, values), HttpStatus.OK);
+        } catch (RuntimeException e) {
+            return RuntimeExceptionHandler.handlePSQLException(e);
         }
+    }
+
+    @GetMapping("/{id}/services")
+    public ResponseEntity<List<BookingAddServicesCustom>> getServices(@PathVariable("id") Long id) {
+        return new ResponseEntity<>(bookingService.getServices(id), HttpStatus.OK);
+    }
+
+    @DeleteMapping("/{id}/services/{serviceId}")
+    public ResponseEntity deleteService(@PathVariable Long id, @PathVariable Long serviceId) throws Throwable {
+        bookingService.deleteService(id, serviceId);
+        return new ResponseEntity(HttpStatus.OK);
     }
 }

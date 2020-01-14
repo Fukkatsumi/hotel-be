@@ -3,19 +3,22 @@ package com.netcracker.hotelbe.service;
 import com.netcracker.hotelbe.entity.ApartmentClass;
 import com.netcracker.hotelbe.entity.ApartmentPrice;
 import com.netcracker.hotelbe.repository.ApartmentPriceRepository;
-import com.netcracker.hotelbe.utils.CustomEntityLogMessage;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
+import com.netcracker.hotelbe.service.filter.FilterService;
+import com.netcracker.hotelbe.utils.enums.MathOperation;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Service;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.Validator;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import javax.persistence.EntityNotFoundException;
+import java.sql.Date;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class ApartmentPriceService {
-    private static Logger logger = LogManager.getLogger(ApartmentPriceService.class);
-    private final static String ENTITY_NAME = ApartmentPrice.class.getSimpleName();
 
     @Autowired
     private ApartmentPriceRepository apartmentPriceRepository;
@@ -23,68 +26,101 @@ public class ApartmentPriceService {
     @Autowired
     private ApartmentClassService apartmentClassService;
 
-    public List<ApartmentPrice> findAll() {
-        logger.trace(String.format(CustomEntityLogMessage.FIND_ALL_ENTITY, ENTITY_NAME));
+    @Autowired
+    @Qualifier("apartmentPriceValidator")
+    private Validator apartmentPriceValidator;
 
-        final List<ApartmentPrice> apartmentPrices = apartmentPriceRepository.findAll();
-        logger.info(String.format(CustomEntityLogMessage.FOUND_AMOUNT_ELEMENT, apartmentPrices.size()));
+    @Autowired
+    private FilterService filterService;
+
+    @Autowired
+    private EntityService entityService;
+
+    public List<ApartmentPrice> findAll() {
+        List<ApartmentPrice> apartmentPrices = apartmentPriceRepository.findAll();
+        apartmentPrices.forEach(this::correctingDate);
+        return apartmentPrices;
+    }
+
+    public List<ApartmentPrice> getAllByParams(Map<String, String> allParams) {
+        List<ApartmentPrice> apartmentPrices;
+        if(allParams.size()!=0) {
+            apartmentPrices = apartmentPriceRepository.findAll(filterService.fillFilter(allParams, ApartmentPrice.class));
+        } else {
+            apartmentPrices = apartmentPriceRepository.findAll();
+        }
+        apartmentPrices.forEach(this::correctingDate);
 
         return apartmentPrices;
     }
 
-    public Long save(ApartmentPrice apartmentPrice) {
-        logger.trace(String.format(CustomEntityLogMessage.SAVE_ENTITY, ENTITY_NAME));
-
+    public ApartmentPrice save(ApartmentPrice apartmentPrice) {
         final ApartmentClass apartmentClass = apartmentClassService.findById(apartmentPrice.getApartmentClass().getId());
         apartmentPrice.setApartmentClass(apartmentClass);
 
-        final ApartmentPrice save = apartmentPriceRepository.save(apartmentPrice);
-        final Long id = save.getId();
-        logger.trace(String.format(CustomEntityLogMessage.SAVE_ENTITY_WITH_ID, ENTITY_NAME, id));
-
-        return id;
+        return apartmentPriceRepository.save(apartmentPrice);
     }
 
     public ApartmentPrice findById(final Long id) {
-        logger.trace(String.format(CustomEntityLogMessage.FIND_ENTITY_BY_ID, ENTITY_NAME, id));
-
-        return apartmentPriceRepository.findById(id).orElseThrow(
+        ApartmentPrice apartmentPrice = apartmentPriceRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException(String.valueOf(id))
         );
+        return correctingDate(apartmentPrice);
     }
 
-    public Long update(final ApartmentPrice apartmentPrice, final Long id) {
-        logger.trace(String.format(CustomEntityLogMessage.UPDATE_ENTITY, ENTITY_NAME));
-
-        final ApartmentClass apartmentClass = apartmentClassService.findById(apartmentPrice.getApartmentClass().getId());
-        logger.trace(String.format(CustomEntityLogMessage.FOUND_ENTITY_WITH_ID, ENTITY_NAME, apartmentPrice.getApartmentClass().getId()));
-
-
-        ApartmentPrice update = apartmentPriceRepository.findById(id).orElseThrow(
+    public ApartmentPrice update(ApartmentPrice apartmentPrice, final Long id) {
+        apartmentPriceRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException(String.valueOf(id))
         );
-        logger.trace(String.format(CustomEntityLogMessage.FOUND_ENTITY_WITH_ID, ENTITY_NAME, apartmentPrice.getApartmentClass().getId()));
 
-        update.setPrice(apartmentPrice.getPrice());
-        update.setStartPeriod(apartmentPrice.getStartPeriod());
-        update.setEndPeriod(apartmentPrice.getEndPeriod());
-        update.setApartmentClass(apartmentClass);
-        update = apartmentPriceRepository.save(update);
-        logger.trace(String.format(CustomEntityLogMessage.UPDATED_ENTITY_SAVED, ENTITY_NAME));
+        final ApartmentClass apartmentClass = apartmentClassService.findById(apartmentPrice.getApartmentClass().getId());
 
-        return update.getId();
+        apartmentPrice.setApartmentClass(apartmentClass);
+        apartmentPrice.setId(id);
+
+        return apartmentPriceRepository.save(apartmentPrice);
     }
 
     public void deleteById(final Long id) {
-        logger.trace(String.format(CustomEntityLogMessage.DELETE_ENTITY_BY_ID, ENTITY_NAME, id));
-
         final ApartmentPrice delete = apartmentPriceRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException(String.valueOf(id))
         );
-        logger.trace(String.format(CustomEntityLogMessage.FOUND_ENTITY_FOR_DELETE, ENTITY_NAME));
 
         apartmentPriceRepository.delete(delete);
-        logger.trace(String.format(CustomEntityLogMessage.ENTITY_DELETED, ENTITY_NAME));
     }
 
+    public ApartmentPrice patch(Long id, Map<String, Object> updates) {
+        ApartmentPrice apartmentPrice = apartmentPriceRepository.findById(id).orElseThrow(
+                () -> new EntityNotFoundException(String.valueOf(id))
+        );
+
+        return apartmentPriceRepository.save((ApartmentPrice) entityService.fillFields(updates, apartmentPrice));
+    }
+
+    public void validate(final ApartmentPrice apartmentPrice, BindingResult bindingResult) throws MethodArgumentNotValidException {
+        apartmentPriceValidator.validate(apartmentPrice, bindingResult);
+        if (bindingResult.hasErrors()) {
+            throw new MethodArgumentNotValidException(null, bindingResult);
+        }
+    }
+
+    private ApartmentPrice correctingDate(ApartmentPrice apartmentPrice){
+        Date startPeriod = entityService.correctingDate(apartmentPrice.getStartPeriod(), MathOperation.PLUS, 1);
+        apartmentPrice.setStartPeriod(startPeriod);
+
+        Date endPeriod = entityService.correctingDate(apartmentPrice.getEndPeriod(), MathOperation.PLUS, 1);
+        apartmentPrice.setEndPeriod(endPeriod);
+
+        return apartmentPrice;
+    }
+
+    public ApartmentPrice correctingDateMinus(ApartmentPrice apartmentPrice){
+        Date startPeriod = entityService.correctingDate(apartmentPrice.getStartPeriod(), MathOperation.MINUS, 1);
+        apartmentPrice.setStartPeriod(startPeriod);
+
+        Date endPeriod = entityService.correctingDate(apartmentPrice.getEndPeriod(), MathOperation.MINUS, 1);
+        apartmentPrice.setEndPeriod(endPeriod);
+
+        return apartmentPrice;
+    }
 }

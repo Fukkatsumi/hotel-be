@@ -53,7 +53,7 @@ public class CustomResponseEntityExceptionHandler extends ResponseEntityExceptio
         String responseMessage = runtimeException.getMessage();
         if (rootCause instanceof PSQLException) {
             logMessage = rootCause.getMessage();
-            responseMessage = logMessage.split("Detail: ")[1];
+            responseMessage = logMessage.split("Detail: ")[0];
             if (logger.isEnabledFor(Priority.ERROR)) {
                 logger.error(logMessage);
             }

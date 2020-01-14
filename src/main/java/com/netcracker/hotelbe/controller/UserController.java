@@ -36,7 +36,6 @@ public class UserController {
 
     @PostMapping
     public ResponseEntity<Long> addUser(@RequestBody @Valid User user){
-        System.out.println("aa");
         return new ResponseEntity<>(userService.save(user).getId(), HttpStatus.OK);
     }
 

@@ -10,6 +10,7 @@ import org.springframework.validation.Validator;
 import javax.validation.ConstraintViolation;
 import java.sql.Date;
 import java.sql.Timestamp;
+import java.time.LocalDate;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,6 +18,8 @@ import java.util.Set;
 
 @Service
 public class ApartmentPriceValidator implements Validator {
+
+    private final static String DATE_BETWEEN_EXISTING = "%s between existing (id=%s) startPeriod(%s) and endPeriod(%s)";
 
     @Autowired
     private javax.validation.Validator validator;
@@ -64,21 +67,26 @@ public class ApartmentPriceValidator implements Validator {
         Map<String, String> values = new HashMap<>();
         values.put("apartmentClass", String.valueOf(apartmentPrice.getApartmentClass().getId()));
 
-        List<ApartmentPrice> apartmentPrices = apartmentPriceService.getAllByParams(values);
+        List<ApartmentPrice> apartmentPrices = apartmentPriceService.findAll(values);
 
         for (ApartmentPrice ap : apartmentPrices) {
-            if (startPeriod.compareTo(ap.getStartPeriod()) >= 0
-                    && startPeriod.compareTo(ap.getEndPeriod()) <= 0) {
-                errors.rejectValue("startPeriod", "", "startPeriod between existing (id=" + ap.getId() + ") startPeriod and endPeriod");
+            LocalDate localStartPeriod = startPeriod.toLocalDate();
+            LocalDate localEndPeriod = endPeriod.toLocalDate();
+
+            LocalDate start = ap.getStartPeriod().toLocalDate();
+            LocalDate end = ap.getEndPeriod().toLocalDate();
+            if (localStartPeriod.compareTo(start) >= 0
+                    && localStartPeriod.compareTo(end) <= 0) {
+                errors.rejectValue("startPeriod", "", String.format(DATE_BETWEEN_EXISTING, "startPeriod", ap.getId(), start, end));
                 break;
             }
-            if (endPeriod.compareTo(ap.getStartPeriod()) >= 0
-                    && endPeriod.compareTo(ap.getEndPeriod()) <= 0) {
-                errors.rejectValue("endPeriod", "", "endPeriod between existing (id=" + ap.getId() + ") startPeriod and endPeriod");
+            if (localEndPeriod.compareTo(start) >= 0
+                    && localEndPeriod.compareTo(end) <= 0) {
+                errors.rejectValue("startPeriod", "", String.format(DATE_BETWEEN_EXISTING, "endPeriod", ap.getId(), start, end));
                 break;
             }
-            if (startPeriod.compareTo(ap.getStartPeriod()) <= 0
-                    && endPeriod.compareTo(ap.getEndPeriod()) >= 0) {
+            if (localStartPeriod.compareTo(start) <= 0
+                    && localEndPeriod.compareTo(end) >= 0) {
                 errors.rejectValue("startPeriod", "", "existing (id=" + ap.getId() + ") price between startPeriod and endPeriod");
                 break;
             }

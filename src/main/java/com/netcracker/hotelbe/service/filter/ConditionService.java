@@ -26,21 +26,21 @@ public class ConditionService {
         switch (fullDate.length) {
             //format "yyyy-MM-dd"
             case 1:
-                firstDate.append(value).append(" 00:00:00");
-                secondDate.append(value).append(" 23:59:59");
+                firstDate.append(value).append(" ").append("00").append(":").append("00").append(":").append("00");
+                secondDate.append(value).append(" ").append("23").append(":").append("59").append(":").append("59");
                 break;
             case 2:
                 switch (fullDate[1].split(":").length) {
                     //format "yyyy-MM-dd HH"
                     case 1:
-                        firstDate.append(value).append(":00:00");
-                        secondDate.append(value).append(":59:59");
+                        firstDate.append(value).append(":").append("00").append(":").append("00");
+                        secondDate.append(value).append(":").append("59").append(":").append("59");
                         break;
 
                     //format "yyyy-MM-dd HH:mm"
                     case 2:
-                        firstDate.append(value).append(":00");
-                        secondDate.append(value).append(":59");
+                        firstDate.append(value).append(":").append("00");
+                        secondDate.append(value).append(":").append("59");
                         break;
 
                     //format "yyyy-MM-dd HH:mm:ss"

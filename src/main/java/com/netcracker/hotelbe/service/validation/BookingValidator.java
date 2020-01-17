@@ -41,9 +41,11 @@ public class BookingValidator implements Validator {
         Booking booking = (Booking) o;
 
         Timestamp currentTime = new Timestamp(System.currentTimeMillis() - 120000);
-        booking.setCreatedDate(currentTime);
+        if (booking.getCreatedDate() == null || booking.getCreatedDate().compareTo(currentTime) >= 0) {
+            booking.setCreatedDate(currentTime);
+        }
 
-        if (booking.getEndDate().compareTo(booking.getStartDate()) < 0){
+        if (booking.getEndDate().compareTo(booking.getStartDate()) < 0) {
             errors.rejectValue("endDate", "", "End date cant be before start date");
         }
         List<ApartmentClassCustom> apartmentClassCustomList = bookingService.findFreeApartments(booking.getStartDate().toString(), booking.getEndDate().toString());

@@ -123,8 +123,11 @@ public class BookingService {
         booking.setApartmentClass(apartmentClass);
         booking.setUser(user);
         booking.setId(id);
-
-        booking.setApartment(validateBookingApartment(booking.getApartment().getId(), booking));
+        if(booking.getApartment() != null) {
+            booking.setApartment(validateBookingApartment(booking.getApartment().getId(), booking));
+        } else {
+            throw new EntityNotFoundException("null");
+        }
 
         int totalPrice = calculateBookingTotalPrice(booking);
         booking.setTotalPrice(totalPrice);

@@ -38,19 +38,22 @@ public class ApartmentPriceService {
 
     public List<ApartmentPrice> findAll() {
         List<ApartmentPrice> apartmentPrices = apartmentPriceRepository.findAll();
-        apartmentPrices.forEach(this::correctingDate);
         return apartmentPrices;
+    }
+
+    public List<ApartmentPrice> findAll(Map<String, String> allParams){
+        return apartmentPriceRepository.findAll(filterService.fillFilter(allParams, ApartmentPrice.class));
     }
 
     public List<ApartmentPrice> getAllByParams(Map<String, String> allParams) {
         List<ApartmentPrice> apartmentPrices;
         if(allParams.size()!=0) {
-            apartmentPrices = apartmentPriceRepository.findAll(filterService.fillFilter(allParams, ApartmentPrice.class));
+            apartmentPrices = findAll(allParams);
         } else {
-            apartmentPrices = apartmentPriceRepository.findAll();
+            apartmentPrices = findAll();
         }
-        apartmentPrices.forEach(this::correctingDate);
 
+        apartmentPrices.forEach(this::correctingDate);
         return apartmentPrices;
     }
 

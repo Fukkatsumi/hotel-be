@@ -1,9 +1,9 @@
 package com.netcracker.hotelbe.utils;
 
 import com.google.common.base.Throwables;
+import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.apache.log4j.Priority;
 import org.postgresql.util.PSQLException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,8 +17,9 @@ public class RuntimeExceptionHandler {
             throw runtimeException;
         } else {
             String logMessage = rootCause.getMessage();
-            String responseMessage = logMessage.split("Detail: ")[0];
-            if (LOG.isEnabledFor(Priority.ERROR)) {
+            String responseMessage = logMessage.split("Detail: ")[1];
+
+            if (LOG.getLevel() == Level.ERROR) {
                 LOG.error(logMessage);
             }
 

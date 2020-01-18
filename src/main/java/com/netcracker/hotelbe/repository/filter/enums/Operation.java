@@ -1,4 +1,4 @@
-package com.netcracker.hotelbe.repository.filter;
+package com.netcracker.hotelbe.repository.filter.enums;
 
 public enum Operation {
     EQUALS,

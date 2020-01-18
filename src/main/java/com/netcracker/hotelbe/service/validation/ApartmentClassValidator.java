@@ -1,7 +1,6 @@
 package com.netcracker.hotelbe.service.validation;
 
 import com.netcracker.hotelbe.entity.ApartmentClass;
-import com.netcracker.hotelbe.service.ApartmentClassService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.Errors;
@@ -14,9 +13,6 @@ import java.util.Set;
 public class ApartmentClassValidator implements Validator {
     @Autowired
     private javax.validation.Validator validator;
-
-    @Autowired
-    private ApartmentClassService apartmentClassService;
 
     @Override
     public boolean supports(Class<?> aClass) {

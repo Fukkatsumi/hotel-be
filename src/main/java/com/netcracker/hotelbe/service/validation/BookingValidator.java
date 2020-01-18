@@ -2,7 +2,6 @@ package com.netcracker.hotelbe.service.validation;
 
 import com.netcracker.hotelbe.entity.ApartmentClassCustom;
 import com.netcracker.hotelbe.entity.Booking;
-import com.netcracker.hotelbe.entity.UnavailableApartment;
 import com.netcracker.hotelbe.service.BookingService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -10,7 +9,6 @@ import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 
 import javax.validation.ConstraintViolation;
-import java.sql.Date;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Set;

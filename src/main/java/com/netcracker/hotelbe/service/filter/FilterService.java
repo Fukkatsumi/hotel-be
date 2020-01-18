@@ -1,6 +1,7 @@
 package com.netcracker.hotelbe.service.filter;
 
 import com.netcracker.hotelbe.repository.filter.Filter;
+import com.netcracker.hotelbe.repository.filter.impl.FilterImpl;
 import com.netcracker.hotelbe.utils.enums.RegEx;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -20,7 +21,7 @@ public class FilterService {
     private ConditionService conditionService;
 
     public Filter fillFilter(final Map<String, String> allParams, Class clazz) {
-        Filter filter = new Filter();
+        Filter filter = new FilterImpl();
         allParams.forEach((k, v) -> {
             try {
                 Field field = clazz.getDeclaredField(k);

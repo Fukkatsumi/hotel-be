@@ -10,6 +10,7 @@ import java.util.Optional;
 @Repository
 public interface UserRepository extends JpaRepository<User, Long>, JpaSpecificationExecutor<User> {
 
+    @Override
     Optional<User> findById(Long id);
 
     Optional<User> findByLogin(String login);

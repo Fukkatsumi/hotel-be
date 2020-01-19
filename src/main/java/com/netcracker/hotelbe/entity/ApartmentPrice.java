@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 
 import javax.persistence.*;
-import javax.validation.constraints.Min;
 import java.io.Serializable;
 import java.sql.Date;
 

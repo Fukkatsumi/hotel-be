@@ -1,15 +1,17 @@
 package com.netcracker.hotelbe.repository.filter;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.netcracker.hotelbe.repository.filter.enums.Operation;
 
-@Data
-@AllArgsConstructor
-@NoArgsConstructor
-public class Condition {
-    private String field;
-    private Object value;
-    private Operation operation;
+public interface Condition {
+    void setField(String field);
 
+    String getField();
+
+    void setValue(Object value);
+
+    Object getValue();
+
+    void setOperation(Operation operation);
+
+    Operation getOperation();
 }

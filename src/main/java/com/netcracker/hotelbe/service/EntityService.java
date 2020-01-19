@@ -18,6 +18,11 @@ import java.util.logging.Logger;
 public class EntityService {
     private final static Logger LOG = Logger.getLogger("EntityService");
 
+    public static final long SECOND = 1000; // in milli-seconds.
+    public static final long MINUTE = 60 * SECOND;
+    public static final long HOUR = 60 * MINUTE;
+    public static final long DAY = 24 * HOUR;
+
     public Object fillFields(final Map<String, Object> fields, final Object targetObject) {
         Object object = getCopyFromObject(targetObject);
         Class clazz = object.getClass();
@@ -57,81 +62,68 @@ public class EntityService {
         if (date == null) {
             return date;
         } else {
-            Date correctedDate = (Date) date.clone();
-            switch (operation) {
-                case PLUS:
-                    correctedDate.setDate(correctedDate.getDate() + dayShift);
-                    break;
-                case MINUS:
-                    correctedDate.setDate(correctedDate.getDate() - dayShift);
-                default:
-                    break;
-            }
-        return correctedDate;
-    }
+            return correctingDateWithLongFormat(date, operation, dayShift * DAY);
+        }
 
-}
+    }
 
     public Timestamp correctingTimestamp(Timestamp timestamp, MathOperation operation, UnitOfTime unitOfTime, int timeShift) {
         if (timestamp == null) {
             return timestamp;
         } else {
-            Timestamp correctedDate = (Timestamp) timestamp.clone();
+            Timestamp correctedDate;
             switch (unitOfTime) {
                 case DAY:
-                    switch (operation) {
-                        case PLUS:
-                            correctedDate.setDate(correctedDate.getDate() + timeShift);
-                            break;
-                        case MINUS:
-                            correctedDate.setDate(correctedDate.getDate() - timeShift);
-                        default:
-                            break;
-                    }
+                    correctedDate = correctingTimestampWithLongFormat(timestamp, operation, timeShift * DAY);
                     break;
                 case HOUR:
-                    switch (operation) {
-                        case PLUS:
-                            correctedDate.setHours(correctedDate.getHours() + timeShift);
-                            break;
-                        case MINUS:
-                            correctedDate.setHours(correctedDate.getHours() - timeShift);
-                        default:
-                            break;
-                    }
+                    correctedDate = correctingTimestampWithLongFormat(timestamp, operation, timeShift * HOUR);
                     break;
                 case MINUTE:
-                    switch (operation) {
-                        case PLUS:
-                            correctedDate.setMinutes(correctedDate.getMinutes() + timeShift);
-                            break;
-                        case MINUS:
-                            correctedDate.setMinutes(correctedDate.getMinutes() - timeShift);
-                        default:
-                            break;
-                    }
+                    correctedDate = correctingTimestampWithLongFormat(timestamp, operation, timeShift * MINUTE);
                     break;
                 case SECOND:
-                    switch (operation) {
-                        case PLUS:
-                            correctedDate.setSeconds(correctedDate.getSeconds() + timeShift);
-                            break;
-                        case MINUS:
-                            correctedDate.setSeconds(correctedDate.getSeconds() - timeShift);
-                        default:
-                            break;
-                    }
+                    correctedDate = correctingTimestampWithLongFormat(timestamp, operation, timeShift * SECOND);
                     break;
                 default:
+                    correctedDate = (Timestamp) timestamp.clone();
                     break;
             }
             return correctedDate;
         }
     }
 
+    private Date correctingDateWithLongFormat(Date date, MathOperation operation, Long timeShift) {
+        Date correctedDate = (Date) date.clone();
+        switch (operation) {
+            case PLUS:
+                correctedDate.setTime(correctedDate.getTime() + timeShift);
+                break;
+            case MINUS:
+                correctedDate.setTime(correctedDate.getTime() - timeShift);
+            default:
+                break;
+        }
+        return correctedDate;
+    }
+
+    private Timestamp correctingTimestampWithLongFormat(Timestamp timestamp, MathOperation operation, Long timeShift) {
+        Timestamp correctedDate = (Timestamp) timestamp.clone();
+        switch (operation) {
+            case PLUS:
+                correctedDate.setTime(correctedDate.getTime() + timeShift);
+                break;
+            case MINUS:
+                correctedDate.setTime(correctedDate.getTime() - timeShift);
+            default:
+                break;
+        }
+        return correctedDate;
+    }
+
     private Object getCopyFromObject(final Object object) {
         try {
-            Object copy = object.getClass().newInstance();
+            Object copy = object.getClass().getDeclaredConstructor().newInstance();
             Class clazz = copy.getClass();
             Field[] fields = object.getClass().getDeclaredFields();
             for (int i = 0; i < fields.length; i++) {
@@ -149,7 +141,7 @@ public class EntityService {
                 }
             }
             return copy;
-        } catch (InstantiationException | IllegalAccessException e) {
+        } catch (InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
             LOG.warning("Error copying object!");
             return object;
         }

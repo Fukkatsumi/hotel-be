@@ -8,10 +8,12 @@ public class ApartmentClassCustom {
      * @countOfApartments - quantity free apartments according to booked apartmentClass in "Booking" and booked apartments
      * @apartmentClass - unique object
      * @apatmemtList - list of apartments which are NOT booked in "Booking"
+     * @aparmentPriceOnDates - price on dates according to "ApartmentPrice"
      */
     private Integer countOfApartments;
     private ApartmentClass apartmentClass;
     private List<Apartment> apartmentList;
+    private Integer apartmentPriceOnDates;
 
     public ApartmentClassCustom(ApartmentClass apartmentClass) {
         this.apartmentClass = apartmentClass;
@@ -45,5 +47,13 @@ public class ApartmentClassCustom {
 
     public void setCountOfApartments(Integer countOfApartments) {
         this.countOfApartments = countOfApartments;
+    }
+
+    public Integer getApartmentPriceOnDates() {
+        return apartmentPriceOnDates;
+    }
+
+    public void setApartmentPriceOnDates(Integer apartmentPriceOnDates) {
+        this.apartmentPriceOnDates = apartmentPriceOnDates;
     }
 }

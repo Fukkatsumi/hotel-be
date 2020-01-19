@@ -85,9 +85,6 @@ public class BookingService {
         booking.setUser(user);
         booking.setApartment(null);
 
-        int totalPrice = calculateBookingTotalPrice(booking);
-        booking.setTotalPrice(totalPrice);
-
         return bookingRepository.save(booking);
     }
 
@@ -125,9 +122,6 @@ public class BookingService {
         booking.setId(id);
 
         booking.setApartment(validateBookingApartment(booking.getApartment().getId(), booking));
-
-        int totalPrice = calculateBookingTotalPrice(booking);
-        booking.setTotalPrice(totalPrice);
 
         return bookingRepository.save(booking);
     }
@@ -169,16 +163,8 @@ public class BookingService {
         throw new EntityNotFoundException(idApartment + ". Apartment is engaged");
     }
 
-    public int calculateBookingTotalPrice(Booking booking) {
-        List<BookingAddServicesCustom> bookingAddServicesCustomList = getServices(booking.getId());
-        int priceAllServices = 0;
-        for (BookingAddServicesCustom bookingAddServicesCustom :
-                bookingAddServicesCustomList) {
-            int countServices = bookingAddServicesCustom.getCountServices();
-            BookingAddServices bookingAddServices = bookingAddServicesCustom.getBookingAddServices();
-            int priceService = bookingAddServices.getPrice();
-            priceAllServices += countServices * priceService;
-        }
+    public int calculateBookingTotalApartmentPrice(Booking booking) {
+        int priceAllServices = calculateBookingTotalServicesPrice(booking);
         long days = (booking.getEndDate().getTime() - booking.getStartDate().getTime()) / (1000 * 3600 * 24) + 1;
 
         Map<String, String> params = new HashMap<>();
@@ -191,6 +177,27 @@ public class BookingService {
         priceAllServices = countPriceOnAllDays(days, apartmentPriceList, booking, priceAllServices);
 
         return priceAllServices;
+    }
+
+    private int calculateBookingTotalServicesPrice(Booking booking) {
+        List<BookingAddServicesCustom> bookingAddServicesCustomList = getServices(booking.getId());
+        int priceAllServices = 0;
+        for (BookingAddServicesCustom bookingAddServicesCustom :
+                bookingAddServicesCustomList) {
+            int countServices = bookingAddServicesCustom.getCountServices();
+            BookingAddServices bookingAddServices = bookingAddServicesCustom.getBookingAddServices();
+            int priceService = bookingAddServices.getPrice();
+            priceAllServices += countServices * priceService;
+        }
+        return priceAllServices;
+    }
+
+    private Booking createMockBooking(Date startDate, Date endDate, ApartmentClass apartmentClass) {
+        Booking booking = new Booking();
+        booking.setApartmentClass(apartmentClass);
+        booking.setStartDate(startDate);
+        booking.setEndDate(endDate);
+        return booking;
     }
 
     private int countPriceOnAllDays(long days, List<ApartmentPrice> apartmentPriceList, Booking booking, int priceAllServices) {
@@ -287,7 +294,7 @@ public class BookingService {
                 }
             }
         }
-        return toApartmentClassCustom(apartmentList, apartmentClassReservedMap);
+        return toApartmentClassCustom(apartmentList, apartmentClassReservedMap, startDate, endDate);
     }
 
     private Date toDate(String strDate) {
@@ -322,7 +329,7 @@ public class BookingService {
         }
     }
 
-    private List<ApartmentClassCustom> toApartmentClassCustom(List<Apartment> apartmentList, Map<String, Integer> apartmentClassReservedMap) {
+    private List<ApartmentClassCustom> toApartmentClassCustom(List<Apartment> apartmentList, Map<String, Integer> apartmentClassReservedMap, Date startDate, Date endDate) {
         List<ApartmentClassCustom> apartmentClassCustomsList = new ArrayList<>();
         for (ApartmentClass apartmentClass :
                 apartmentClassService.findAll()) {
@@ -346,6 +353,7 @@ public class BookingService {
             if (apartmentClassReservedMap.containsKey(apClassCustom.getApartmentClass().getNameClass())) {
                 apClassCustom.setCountOfApartments(apClassCustom.getCountOfApartments() - apartmentClassReservedMap.get(apClassCustom.getApartmentClass().getNameClass()));
             }
+            apClassCustom.setApartmentPriceOnDates(calculateBookingTotalApartmentPrice(createMockBooking(startDate, endDate, apClassCustom.getApartmentClass())));
         }
 
         return apartmentClassCustomsList;
@@ -365,7 +373,7 @@ public class BookingService {
     }
 
 
-    private Booking correctingDateMinus(Booking booking) {
+    private void correctingDateMinus(Booking booking) {
         Date startDate = entityService.correctingDate(booking.getStartDate(), MathOperation.MINUS, 1);
         booking.setStartDate(startDate);
 
@@ -375,7 +383,6 @@ public class BookingService {
         Timestamp createdDate = entityService.correctingTimestamp(booking.getCreatedDate(), MathOperation.MINUS, UnitOfTime.HOUR, 2);
         booking.setCreatedDate(createdDate);
 
-        return booking;
     }
 
     public Long addService(Long id, Map<String, Long> bookingAddServices) {
@@ -388,7 +395,7 @@ public class BookingService {
         bookingAddServicesShip.setBookingAddServices(bookingAddService);
         bookingAddServicesShip.setCountServices(countServices);
         Long bookingAddServicesId = bookingAddServicesShipService.save(bookingAddServicesShip).getId();
-        booking.setTotalPrice(calculateBookingTotalPrice(booking));
+        booking.setTotalPrice(booking.getTotalPrice() + calculateBookingTotalServicesPrice(booking));
         save(booking);
 
         return bookingAddServicesId;
@@ -419,7 +426,7 @@ public class BookingService {
         bookingAddServicesShipService.deleteById(bookingAddServicesShip.getId());
 
         Booking booking = findById(id);
-        booking.setTotalPrice(calculateBookingTotalPrice(booking));
+        booking.setTotalPrice(calculateBookingTotalApartmentPrice(booking));
         save(booking);
     }
 }

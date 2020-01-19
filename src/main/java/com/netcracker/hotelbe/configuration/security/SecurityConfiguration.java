@@ -38,7 +38,6 @@ public class SecurityConfiguration extends WebSecurityConfigurerAdapter {
                 .antMatchers("/apartments/**").hasAnyAuthority("Manager", "Administrator")
                 .antMatchers("/staff/**").hasAnyAuthority("Manager", "Administrator")
                 .antMatchers(HttpMethod.PUT, "/bookings/**").hasAnyAuthority("Manager", "Administrator")
-                .antMatchers(HttpMethod.PATCH, "/bookings/**").hasAnyAuthority("Manager", "Administrator")
                 .anyRequest().authenticated()
                 .and()
                 .addFilter(new JwtAuthenticationFilter(authenticationManager()))

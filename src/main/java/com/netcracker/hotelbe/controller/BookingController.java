@@ -42,7 +42,7 @@ public class BookingController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Booking> getById(@PathVariable("id") final Long id) {
-        return new ResponseEntity<>(bookingService.findById(id), HttpStatus.OK);
+        return new ResponseEntity<>(bookingService.getById(id), HttpStatus.OK);
     }
 
     @PutMapping("/{id}")
@@ -79,6 +79,11 @@ public class BookingController {
         } catch (RuntimeException e) {
             return RuntimeExceptionHandler.handlePSQLException(e);
         }
+    }
+
+    @PatchMapping("/{id}/services/recalculation")
+    public ResponseEntity<Integer> recalculationBookingPrice(@PathVariable("id") Long id){
+        return new ResponseEntity<>(bookingService.recalculatePrice(id), HttpStatus.OK);
     }
 
     @GetMapping("/{id}/services")

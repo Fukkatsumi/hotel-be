@@ -3,6 +3,9 @@ package com.netcracker.hotelbe.service.validation;
 import com.netcracker.hotelbe.entity.ApartmentClassCustom;
 import com.netcracker.hotelbe.entity.Booking;
 import com.netcracker.hotelbe.service.BookingService;
+import com.netcracker.hotelbe.service.EntityService;
+import com.netcracker.hotelbe.utils.enums.MathOperation;
+import com.netcracker.hotelbe.utils.enums.UnitOfTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.Errors;
@@ -21,6 +24,9 @@ public class BookingValidator implements Validator {
 
     @Autowired
     private BookingService bookingService;
+
+    @Autowired
+    private EntityService entityService;
 
     @Override
     public boolean supports(Class<?> aClass) {
@@ -41,8 +47,12 @@ public class BookingValidator implements Validator {
         Booking booking = (Booking) o;
 
         Timestamp currentTime = new Timestamp(System.currentTimeMillis() - 120000);
-        if (booking.getCreatedDate() == null || booking.getCreatedDate().compareTo(currentTime) >= 0) {
+        Timestamp createdDate = entityService.correctingTimestamp(booking.getCreatedDate(), MathOperation.MINUS, UnitOfTime.HOUR, 2);
+
+        if (createdDate == null || createdDate.compareTo(currentTime) >= 0) {
             booking.setCreatedDate(currentTime);
+        } else {
+            booking.setCreatedDate(createdDate);
         }
 
         if (booking.getEndDate().compareTo(booking.getStartDate()) < 0) {

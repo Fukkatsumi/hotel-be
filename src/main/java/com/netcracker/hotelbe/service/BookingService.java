@@ -16,6 +16,7 @@ import org.springframework.validation.Validator;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import javax.persistence.EntityNotFoundException;
+import java.awt.print.Book;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.text.ParseException;
@@ -85,13 +86,21 @@ public class BookingService {
         booking.setUser(user);
         booking.setApartment(null);
 
-        return bookingRepository.save(booking);
+        Booking showBooking = bookingRepository.save(booking);
+        Timestamp showCreatedDate = entityService.correctingTimestamp(showBooking.getCreatedDate(), MathOperation.PLUS, UnitOfTime.HOUR, 2);
+
+        showBooking.setCreatedDate(showCreatedDate);
+        return showBooking;
     }
 
     public Booking findById(Long id) {
-        Booking booking = bookingRepository.findById(id).orElseThrow(
+       return bookingRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException(String.valueOf(id))
         );
+    }
+
+    public Booking getById(Long id){
+        Booking booking = findById(id);
 
         return correctingDate(booking);
     }
@@ -109,9 +118,7 @@ public class BookingService {
 
     public Booking update(Booking booking, Long id) {
 
-        bookingRepository.findById(id).orElseThrow(
-                () -> new EntityNotFoundException(String.valueOf(id))
-        );
+        findById(id);
 
         ApartmentClass apartmentClass = apartmentClassService.findById(booking.getApartmentClass().getId());
 
@@ -120,27 +127,28 @@ public class BookingService {
         booking.setApartmentClass(apartmentClass);
         booking.setUser(user);
         booking.setId(id);
-        if(booking.getApartment() != null) {
+        if (booking.getApartment() != null) {
             booking.setApartment(validateBookingApartment(booking.getApartment().getId(), booking));
         } else {
             throw new EntityNotFoundException("null");
         }
 
-        return bookingRepository.save(booking);
+        Booking showBooking = bookingRepository.save(booking);
+        Timestamp showCreatedDate = entityService.correctingTimestamp(showBooking.getCreatedDate(), MathOperation.PLUS, UnitOfTime.HOUR, 2);
+
+        showBooking.setCreatedDate(showCreatedDate);
+        return showBooking;
     }
 
     public void deleteById(Long id) {
-        Booking delete = bookingRepository.findById(id).orElseThrow(
-                () -> new EntityNotFoundException(String.valueOf(id))
-        );
+        Booking delete = findById(id);
 
         bookingRepository.delete(delete);
     }
 
     public Booking patch(Long id, Map<String, Object> updates) {
-        Booking booking = bookingRepository.findById(id).orElseThrow(
-                () -> new EntityNotFoundException(String.valueOf(id))
-        );
+        Booking booking = findById(id);
+
         if (updates.containsKey("apartment")) {
             long idApartment = Long.parseLong(updates.get("apartment").toString());
             Apartment apartment = validateBookingApartment(idApartment, booking);
@@ -431,5 +439,17 @@ public class BookingService {
         Booking booking = findById(id);
         booking.setTotalPrice(calculateBookingTotalApartmentPrice(booking));
         save(booking);
+    }
+
+    public int recalculatePrice(Long id) {
+        Booking booking = findById(id);
+        int price = calculateBookingTotalApartmentPrice(booking);
+
+        if (price != booking.getTotalPrice()) {
+            booking.setTotalPrice(calculateBookingTotalApartmentPrice(booking));
+            save(booking);
+        }
+
+        return price;
     }
 }

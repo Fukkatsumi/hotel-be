@@ -57,6 +57,8 @@ public class BookingValidator implements Validator {
                 if (apartmentClassCustom.getApartmentClass().getId().equals(booking.getApartmentClass().getId())) {
                     if (apartmentClassCustom.getCountOfApartments() == 0) {
                         errors.rejectValue("apartmentClass", "", "Free apartment doesn't exist in this apartment Class");
+                    } else {
+                        booking.setTotalPrice(apartmentClassCustom.getApartmentPriceOnDates());
                     }
                 }
             }

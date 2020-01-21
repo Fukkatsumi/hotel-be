@@ -61,6 +61,12 @@ public class BookingController {
         return new ResponseEntity(HttpStatus.OK);
     }
 
+    @DeleteMapping("/{id}/cascade")
+    public ResponseEntity cascadeDeleteById(@PathVariable("id") Long id){
+        bookingService.cascadeDeleteById(id);
+        return new ResponseEntity(HttpStatus.OK);
+    }
+
     @GetMapping("/find")
     public ResponseEntity<List<ApartmentClassCustom>> findFreeApartments(@RequestParam String startDate, @RequestParam String endDate) {
         return new ResponseEntity<>(bookingService.findFreeApartments(startDate, endDate), HttpStatus.OK);

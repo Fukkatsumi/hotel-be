@@ -82,9 +82,16 @@ public class BookingService {
     public Booking save(final Booking booking) {
         final ApartmentClass apartmentClass = apartmentClassService.findById(booking.getApartmentClass().getId());
         booking.setApartmentClass(apartmentClass);
-        final User user = userService.findById(booking.getUser().getId());
-        booking.setUser(user);
-        booking.setApartment(null);
+        User user = booking.getUser();
+        if (user != null) {
+            user = userService.findById(user.getId());
+            booking.setUser(user);
+        }
+        Apartment apartment = booking.getApartment();
+        if (apartment != null) {
+            apartment = apartmentService.findById(apartment.getId());
+        }
+        booking.setApartment(apartment);
 
         Booking showBooking = bookingRepository.save(booking);
         Timestamp showCreatedDate = entityService.correctingTimestamp(showBooking.getCreatedDate(), MathOperation.PLUS, UnitOfTime.HOUR, 2);
@@ -94,12 +101,12 @@ public class BookingService {
     }
 
     public Booking findById(Long id) {
-       return bookingRepository.findById(id).orElseThrow(
+        return bookingRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException(String.valueOf(id))
         );
     }
 
-    public Booking getById(Long id){
+    public Booking getById(Long id) {
         Booking booking = findById(id);
 
         return correctingDate(booking);
@@ -406,7 +413,7 @@ public class BookingService {
         bookingAddServicesShip.setBookingAddServices(bookingAddService);
         bookingAddServicesShip.setCountServices(countServices);
         Long bookingAddServicesId = bookingAddServicesShipService.save(bookingAddServicesShip).getId();
-        booking.setTotalPrice(booking.getTotalPrice() + calculateBookingTotalServicesPrice(booking));
+        booking.setTotalPrice(booking.getTotalPrice() + bookingAddService.getPrice() * countServices);
         save(booking);
 
         return bookingAddServicesId;

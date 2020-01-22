@@ -4,18 +4,11 @@ import com.netcracker.hotelbe.entity.User;
 import com.netcracker.hotelbe.repository.UserRepository;
 import com.netcracker.hotelbe.service.filter.FilterService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.mail.SimpleMailMessage;
-import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Service;
 
-import javax.mail.*;
-import javax.mail.internet.*;
 import javax.persistence.EntityNotFoundException;
-import java.io.IOException;
-import java.sql.Date;
 import java.util.List;
 import java.util.Map;
-import java.util.Properties;
 
 @Service
 public class UserService {
@@ -28,12 +21,6 @@ public class UserService {
 
     @Autowired
     private EntityService entityService;
-
-    @Autowired
-    private EmailService emailService;
-
-    @Autowired
-    private JavaMailSender javaMailSender;
 
     public List<User> findAll() {
         return userRepository.findAll();

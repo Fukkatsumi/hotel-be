@@ -3,9 +3,9 @@ package com.netcracker.hotelbe.controller;
 
 
 import com.google.common.base.Throwables;
+import com.netcracker.hotelbe.exception.CustomResponseEntityException;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
-import org.apache.log4j.Priority;
 import org.postgresql.util.PSQLException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.http.HttpHeaders;
@@ -70,5 +70,19 @@ public class CustomResponseEntityExceptionHandler extends ResponseEntityExceptio
             }
         }
         return new ResponseEntity<>(responseMessage, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(value = {CustomResponseEntityException.class})
+    protected ResponseEntity CustomResponseEntityException(CustomResponseEntityException e){
+        final String message = e.getMessage();
+        LOGGER.warn(message);
+
+        ResponseEntity responseEntity;
+        if(e.getHttpStatus()!=null){
+            responseEntity = new ResponseEntity(message, e.getHttpStatus());
+        } else {
+            responseEntity = new ResponseEntity(message, HttpStatus.BAD_REQUEST);
+        }
+        return responseEntity;
     }
 }

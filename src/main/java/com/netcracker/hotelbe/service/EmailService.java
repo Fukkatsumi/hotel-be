@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class EmailService {
 
+    private static String USER_CREDENTIAL = "You have successfully registered!\n\nHi, %s!\nYour credential\nLogin: %s\nPassword: %s";
+
     @Autowired
     private JavaMailSender javaMailSender;
 
@@ -29,11 +31,7 @@ public class EmailService {
 
         Email email = new Email();
         email.setSubject("Hotel: info about user: " + user.getId());
-        email.setText("You have successfully registered!\n\n" +
-                "Hi, " + user.getFirstname() + "!\n" +
-                "Your credential\n" +
-                "Login: " + user.getLogin() + "\n" +
-                "Password: " + user.getPassword());
+        email.setText(String.format(USER_CREDENTIAL, user.getFirstname(), user.getLogin(), user.getPassword()));
 
         send(email, user.getEmail());
     }

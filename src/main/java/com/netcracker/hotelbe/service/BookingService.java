@@ -1,6 +1,8 @@
 package com.netcracker.hotelbe.service;
 
 import com.netcracker.hotelbe.entity.*;
+import com.netcracker.hotelbe.entity.enums.UserRole;
+import com.netcracker.hotelbe.exception.CustomResponseEntityException;
 import com.netcracker.hotelbe.repository.BookingRepository;
 import com.netcracker.hotelbe.service.filter.FilterService;
 import com.netcracker.hotelbe.utils.LoggingManager;
@@ -10,6 +12,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.Validator;
@@ -119,6 +122,17 @@ public class BookingService {
         return bookings;
     }
 
+    public Booking findOneByParam(Map<String, String> allParams) {
+        Booking booking = null;
+        if (allParams.size() != 0) {
+            Optional<Booking> bookingOptional = bookingRepository.findOne(filterService.fillFilter(allParams, Booking.class));
+            if (bookingOptional.isPresent()) {
+                booking = bookingOptional.get();
+            }
+        }
+        return booking;
+    }
+
     public Booking update(Booking booking, Long id) {
 
         findById(id);
@@ -226,11 +240,37 @@ public class BookingService {
     }
 
     public void cascadeDeleteById(Long id) {
-        Booking booking = findById(id);
+        if (SecurityContextHolder.getContext().getAuthentication().getAuthorities().iterator().next().toString().equals(UserRole.Administrator.name())
+                || SecurityContextHolder.getContext().getAuthentication().getAuthorities().iterator().next().toString().equals(UserRole.Manager.name())) {
 
-        bookingAddServicesShipService.deleteByBooking(booking);
+            Booking booking = findById(id);
 
-        bookingRepository.delete(booking);
+            bookingAddServicesShipService.deleteByBooking(booking);
+
+            bookingRepository.delete(booking);
+        } else {
+            cascadeDeleteMyById(id);
+        }
+    }
+
+    public void cascadeDeleteMyById(Long id) {
+        String login = SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString();
+
+        User user = userService.findByLogin(login);
+
+        Map<String, String> values = new HashMap<>();
+        values.put("id", id.toString());
+        values.put("user", user.getId().toString());
+
+        Booking booking = findOneByParam(values);
+
+        if (booking == null) {
+            throw new CustomResponseEntityException("You cannot delete this booking");
+        } else {
+            bookingAddServicesShipService.deleteByBooking(booking);
+
+            bookingRepository.delete(booking);
+        }
     }
 
     private Apartment validateBookingApartment(Long idApartment, Booking booking) {

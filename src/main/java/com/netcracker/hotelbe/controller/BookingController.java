@@ -1,5 +1,6 @@
 package com.netcracker.hotelbe.controller;
 
+import com.netcracker.hotelbe.entity.Apartment;
 import com.netcracker.hotelbe.entity.ApartmentClassCustom;
 import com.netcracker.hotelbe.entity.Booking;
 import com.netcracker.hotelbe.entity.BookingAddServicesCustom;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -70,6 +72,11 @@ public class BookingController {
     @GetMapping("/find")
     public ResponseEntity<List<ApartmentClassCustom>> findFreeApartments(@RequestParam String startDate, @RequestParam String endDate) {
         return new ResponseEntity<>(bookingService.findFreeApartments(startDate, endDate), HttpStatus.OK);
+    }
+
+    @GetMapping("/findList")
+    public ResponseEntity<List<Apartment>> findFreeApartments(@RequestParam String startDate, @RequestParam String endDate, @RequestParam String apartmentClass) {
+        return new ResponseEntity<>(bookingService.findFreeApartmentsForApartmentClass(startDate, endDate, Long.parseLong(apartmentClass)), HttpStatus.OK);
     }
 
     @PatchMapping("/{id}")

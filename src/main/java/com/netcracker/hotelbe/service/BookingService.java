@@ -22,10 +22,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.Period;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 @Service
@@ -244,16 +241,17 @@ public class BookingService {
         }
 
         List<ApartmentClassCustom> apartmentClassCustomList = findFreeApartments(booking.getStartDate().toString(), booking.getEndDate().toString());
+        List<Apartment> apartmentList = findFreeApartmentsForApartmentClass(booking.getStartDate().toString(), booking.getEndDate().toString(), booking.getApartmentClass().getId());
         for (ApartmentClassCustom apartmentClassCustom :
                 apartmentClassCustomList) {
-            if (apartmentClassCustom.getCountOfApartments() != 0 && apartmentClassCustom.getApartmentList().contains(apartment)) {
+            if (apartmentClassCustom.getCountOfApartments() != 0 && apartmentList.contains(apartment)) {
                 return apartment;
             }
         }
         throw new EntityNotFoundException(idApartment + ". Apartment is engaged");
     }
 
-    public int calculateBookingTotalApartmentPrice(Booking booking) {
+    private int calculateBookingTotalApartmentPrice(Booking booking) {
         int priceAllServices = calculateBookingTotalServicesPrice(booking);
         long days = (booking.getEndDate().getTime() - booking.getStartDate().getTime()) / (1000 * 3600 * 24) + 1;
 
@@ -330,18 +328,13 @@ public class BookingService {
         return priceAllServices;
     }
 
-    public List<ApartmentClassCustom> findFreeApartments(String startDateStr, String endDateStr) {
-        List<Booking> bookingList = getAll();
-        bookingList.forEach(this::correctingDateMinus);
+    private List<Apartment> checkUnavailableApartment(Date startDate, Date endDate) {
+        List<Apartment> apartmentList = apartmentService.getAll();
         List<UnavailableApartment> unavailableApartmentList = unavailableApartmentService.getAll();
-        Map<String, Integer> apartmentClassReservedMap = new HashMap<>();
         for (UnavailableApartment unavailableApartment :
                 unavailableApartmentList) {
             unavailableApartmentService.correctingDateMinus(unavailableApartment);
         }
-        List<Apartment> apartmentList = apartmentService.getAll();
-        Date startDate = toDate(startDateStr);
-        Date endDate = toDate(endDateStr);
         if (isValidDates(startDate, endDate)) {
             return null;
         }
@@ -359,6 +352,50 @@ public class BookingService {
                     && (endDate.compareTo(unavailableApartment.getEndDate()) > 0))) {
                 apartmentList.remove(unavailableApartment.getApartment());
             }
+        }
+        return apartmentList;
+    }
+
+
+    public List<Apartment> findFreeApartmentsForApartmentClass(String startDateStr, String endDateStr, Long idApClass) {
+        Date startDate = toDate(startDateStr);
+        Date endDate = toDate(endDateStr);
+        List<Apartment> apartmentList = checkUnavailableApartment(startDate, endDate);
+        if (apartmentList == null) {
+            return null;
+        }
+        apartmentList.removeIf(apartmentTemp -> !apartmentTemp.getApartmentClass().getId().equals(idApClass));
+        Map<String, String> mapApClass = new HashMap<>();
+        mapApClass.put("apartmentClass", idApClass.toString());
+        List<Booking> bookingList = getAllByParams(mapApClass);
+        bookingList.forEach(this::correctingDateMinus);
+        for (Booking booking :
+                bookingList) {
+            if ((startDate.compareTo(booking.getStartDate()) >= 0
+                    && (endDate.compareTo(booking.getEndDate()) <= 0))
+                    || ((startDate.compareTo(booking.getStartDate()) < 0)
+                    && (endDate.compareTo(booking.getEndDate()) <= 0)
+                    && (endDate.compareTo(booking.getStartDate()) >= 0))
+                    || ((startDate.compareTo(booking.getStartDate()) >= 0)
+                    && (startDate.compareTo(booking.getEndDate()) <= 0)
+                    && (endDate.compareTo(booking.getEndDate()) > 0))
+                    || ((startDate.compareTo(booking.getStartDate()) < 0)
+                    && (endDate.compareTo(booking.getEndDate()) > 0))) {
+                apartmentList.remove(booking.getApartment());
+            }
+        }
+        return apartmentList;
+    }
+
+    public List<ApartmentClassCustom> findFreeApartments(String startDateStr, String endDateStr) {
+        List<Booking> bookingList = getAll();
+        bookingList.forEach(this::correctingDateMinus);
+        Map<String, Integer> apartmentClassReservedMap = new HashMap<>();
+        Date startDate = toDate(startDateStr);
+        Date endDate = toDate(endDateStr);
+        List<Apartment> apartmentList = checkUnavailableApartment(startDate, endDate);
+        if (apartmentList == null) {
+            return null;
         }
         for (Booking booking :
                 bookingList) {
@@ -433,7 +470,6 @@ public class BookingService {
                     apartmentClassCustomsList) {
                 if (apClassCustom.getApartmentClass().getId().equals(apartment.getApartmentClass().getId())) {
                     apClassCustom.setCountOfApartments(apClassCustom.getCountOfApartments() + 1);
-                    apClassCustom.addToApartmentList(apartment);
                 }
             }
         }

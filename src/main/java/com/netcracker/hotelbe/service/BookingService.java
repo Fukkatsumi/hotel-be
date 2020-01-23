@@ -1,6 +1,8 @@
 package com.netcracker.hotelbe.service;
 
 import com.netcracker.hotelbe.entity.*;
+import com.netcracker.hotelbe.entity.enums.UserRole;
+import com.netcracker.hotelbe.exception.CustomResponseEntityException;
 import com.netcracker.hotelbe.repository.BookingRepository;
 import com.netcracker.hotelbe.service.filter.FilterService;
 import com.netcracker.hotelbe.utils.LoggingManager;
@@ -10,13 +12,13 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.Validator;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 
 import javax.persistence.EntityNotFoundException;
-import java.awt.print.Book;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.text.ParseException;
@@ -79,9 +81,16 @@ public class BookingService {
     public Booking save(final Booking booking) {
         final ApartmentClass apartmentClass = apartmentClassService.findById(booking.getApartmentClass().getId());
         booking.setApartmentClass(apartmentClass);
-        final User user = userService.findById(booking.getUser().getId());
-        booking.setUser(user);
-        booking.setApartment(null);
+        User user = booking.getUser();
+        if (user != null) {
+            user = userService.findById(user.getId());
+            booking.setUser(user);
+        }
+        Apartment apartment = booking.getApartment();
+        if (apartment != null) {
+            apartment = apartmentService.findById(apartment.getId());
+        }
+        booking.setApartment(apartment);
 
         Booking showBooking = bookingRepository.save(booking);
         Timestamp showCreatedDate = entityService.correctingTimestamp(showBooking.getCreatedDate(), MathOperation.PLUS, UnitOfTime.HOUR, 2);
@@ -91,12 +100,12 @@ public class BookingService {
     }
 
     public Booking findById(Long id) {
-       return bookingRepository.findById(id).orElseThrow(
+        return bookingRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException(String.valueOf(id))
         );
     }
 
-    public Booking getById(Long id){
+    public Booking getById(Long id) {
         Booking booking = findById(id);
 
         return correctingDate(booking);
@@ -111,6 +120,17 @@ public class BookingService {
         }
         bookings.forEach(this::correctingDate);
         return bookings;
+    }
+
+    public Booking findOneByParam(Map<String, String> allParams) {
+        Booking booking = null;
+        if (allParams.size() != 0) {
+            Optional<Booking> bookingOptional = bookingRepository.findOne(filterService.fillFilter(allParams, Booking.class));
+            if (bookingOptional.isPresent()) {
+                booking = bookingOptional.get();
+            }
+        }
+        return booking;
     }
 
     public Booking update(Booking booking, Long id) {
@@ -151,7 +171,106 @@ public class BookingService {
             Apartment apartment = validateBookingApartment(idApartment, booking);
             updates.replace("apartment", apartment);
         }
-        return bookingRepository.save((Booking) entityService.fillFields(updates, booking));
+        if (updates.containsKey("user")) {
+            Long idUser = Long.valueOf(updates.get("user").toString());
+            User user = userService.findById(idUser);
+            updates.replace("user", user);
+        }
+        booking = bookingRepository.save((Booking) entityService.fillFields(updates, booking));
+        booking.setStartDate(entityService.correctingDate(booking.getStartDate(), MathOperation.PLUS, 1));
+        booking.setEndDate(entityService.correctingDate(booking.getEndDate(), MathOperation.PLUS, 1));
+        return booking;
+    }
+
+    public Long addService(Long id, Map<String, Long> bookingAddServices) {
+        Booking booking = findById(id);
+        BookingAddServices bookingAddService = bookingAddServicesService.findById(bookingAddServices.get("id"));
+
+        int countServices = bookingAddServices.get("countServices").intValue();
+        BookingAddServicesShip bookingAddServicesShip = new BookingAddServicesShip();
+        bookingAddServicesShip.setBooking(booking);
+        bookingAddServicesShip.setBookingAddServices(bookingAddService);
+        bookingAddServicesShip.setCountServices(countServices);
+        Long bookingAddServicesId = bookingAddServicesShipService.save(bookingAddServicesShip).getId();
+        booking.setTotalPrice(booking.getTotalPrice() + bookingAddService.getPrice() * countServices);
+        save(booking);
+
+        return bookingAddServicesId;
+    }
+
+    public List<BookingAddServicesCustom> getServices(Long id) {
+        Map<String, String> params = new HashMap<>();
+        params.put("booking", id.toString());
+        List<BookingAddServicesCustom> bookingAddServiceCustoms = new ArrayList<>();
+        List<BookingAddServicesShip> bookingAddServicesShips = bookingAddServicesShipService.getAllByParams(params);
+        bookingAddServicesShips.forEach(bookingAddServicesShip -> {
+            BookingAddServicesCustom bookingService = new BookingAddServicesCustom();
+            bookingService.setBookingAddServices(bookingAddServicesShip.getBookingAddServices());
+            bookingService.setCountServices(bookingAddServicesShip.getCountServices());
+            bookingAddServiceCustoms.add(bookingService);
+        });
+
+        return bookingAddServiceCustoms;
+    }
+
+    public void deleteService(Long id, Long serviceId) throws Throwable {
+        Map<String, String> values = new HashMap<>();
+        values.put("booking", id.toString());
+        values.put("bookingAddServices", serviceId.toString());
+
+        BookingAddServicesShip bookingAddServicesShip = bookingAddServicesShipService.findOneByFilter(values);
+
+        bookingAddServicesShipService.deleteById(bookingAddServicesShip.getId());
+
+        Booking booking = findById(id);
+        booking.setTotalPrice(calculateBookingTotalApartmentPrice(booking));
+        save(booking);
+    }
+
+    public int recalculatePrice(Long id) {
+        Booking booking = findById(id);
+        int price = calculateBookingTotalApartmentPrice(booking);
+
+        if (price != booking.getTotalPrice()) {
+            booking.setTotalPrice(calculateBookingTotalApartmentPrice(booking));
+            save(booking);
+        }
+
+        return price;
+    }
+
+    public void cascadeDeleteById(Long id) {
+        if (SecurityContextHolder.getContext().getAuthentication().getAuthorities().iterator().next().toString().equals(UserRole.Administrator.name())
+                || SecurityContextHolder.getContext().getAuthentication().getAuthorities().iterator().next().toString().equals(UserRole.Manager.name())) {
+
+            Booking booking = findById(id);
+
+            bookingAddServicesShipService.deleteByBooking(booking);
+
+            bookingRepository.delete(booking);
+        } else {
+            cascadeDeleteMyById(id);
+        }
+    }
+
+    public void cascadeDeleteMyById(Long id) {
+        String login = SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString();
+
+        User user = userService.findByLogin(login);
+
+        Map<String, String> values = new HashMap<>();
+        values.put("id", id.toString());
+        values.put("user", user.getId().toString());
+
+        Booking booking = findOneByParam(values);
+
+        if (booking == null) {
+            throw new CustomResponseEntityException("You cannot delete this booking");
+        } else {
+            bookingAddServicesShipService.deleteByBooking(booking);
+
+            bookingRepository.delete(booking);
+        }
     }
 
     private Apartment validateBookingApartment(Long idApartment, Booking booking) {
@@ -432,60 +551,5 @@ public class BookingService {
 
     }
 
-    public Long addService(Long id, Map<String, Long> bookingAddServices) {
-        Booking booking = findById(id);
-        BookingAddServices bookingAddService = bookingAddServicesService.findById(bookingAddServices.get("id"));
 
-        int countServices = bookingAddServices.get("countServices").intValue();
-        BookingAddServicesShip bookingAddServicesShip = new BookingAddServicesShip();
-        bookingAddServicesShip.setBooking(booking);
-        bookingAddServicesShip.setBookingAddServices(bookingAddService);
-        bookingAddServicesShip.setCountServices(countServices);
-        Long bookingAddServicesId = bookingAddServicesShipService.save(bookingAddServicesShip).getId();
-        booking.setTotalPrice(booking.getTotalPrice() + calculateBookingTotalServicesPrice(booking));
-        save(booking);
-
-        return bookingAddServicesId;
-    }
-
-    public List<BookingAddServicesCustom> getServices(Long id) {
-        Map<String, String> params = new HashMap<>();
-        params.put("booking", id.toString());
-        List<BookingAddServicesCustom> bookingAddServiceCustoms = new ArrayList<>();
-        List<BookingAddServicesShip> bookingAddServicesShips = bookingAddServicesShipService.getAllByParams(params);
-        bookingAddServicesShips.forEach(bookingAddServicesShip -> {
-            BookingAddServicesCustom bookingService = new BookingAddServicesCustom();
-            bookingService.setBookingAddServices(bookingAddServicesShip.getBookingAddServices());
-            bookingService.setCountServices(bookingAddServicesShip.getCountServices());
-            bookingAddServiceCustoms.add(bookingService);
-        });
-
-        return bookingAddServiceCustoms;
-    }
-
-    public void deleteService(Long id, Long serviceId) throws Throwable {
-        Map<String, String> values = new HashMap<>();
-        values.put("booking", id.toString());
-        values.put("bookingAddServices", serviceId.toString());
-
-        BookingAddServicesShip bookingAddServicesShip = bookingAddServicesShipService.findOneByFilter(values);
-
-        bookingAddServicesShipService.deleteById(bookingAddServicesShip.getId());
-
-        Booking booking = findById(id);
-        booking.setTotalPrice(calculateBookingTotalApartmentPrice(booking));
-        save(booking);
-    }
-
-    public int recalculatePrice(Long id) {
-        Booking booking = findById(id);
-        int price = calculateBookingTotalApartmentPrice(booking);
-
-        if (price != booking.getTotalPrice()) {
-            booking.setTotalPrice(calculateBookingTotalApartmentPrice(booking));
-            save(booking);
-        }
-
-        return price;
-    }
 }

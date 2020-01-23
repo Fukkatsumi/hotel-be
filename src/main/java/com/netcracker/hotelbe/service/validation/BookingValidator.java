@@ -58,17 +58,21 @@ public class BookingValidator implements Validator {
         if (booking.getEndDate().compareTo(booking.getStartDate()) < 0) {
             errors.rejectValue("endDate", "", "End date cant be before start date");
         }
-        List<ApartmentClassCustom> apartmentClassCustomList = bookingService.findFreeApartments(booking.getStartDate().toString(), booking.getEndDate().toString());
-        if (apartmentClassCustomList == null) {
-            errors.rejectValue("startDate", "endDate", "Free apartments on these dates didn't find");
+        if (booking.getApartmentClass() == null) {
+            errors.rejectValue("apartmentClass", "", "Apartment class cannot be empty");
         } else {
-            for (ApartmentClassCustom apartmentClassCustom :
-                    apartmentClassCustomList) {
-                if (apartmentClassCustom.getApartmentClass().getId().equals(booking.getApartmentClass().getId())) {
-                    if (apartmentClassCustom.getCountOfApartments() == 0) {
-                        errors.rejectValue("apartmentClass", "", "Free apartment doesn't exist in this apartment Class");
-                    } else {
-                        booking.setTotalPrice(apartmentClassCustom.getApartmentPriceOnDates());
+            List<ApartmentClassCustom> apartmentClassCustomList = bookingService.findFreeApartments(booking.getStartDate().toString(), booking.getEndDate().toString());
+            if (apartmentClassCustomList == null) {
+                errors.rejectValue("startDate", "endDate", "Free apartments on these dates didn't find");
+            } else {
+                for (ApartmentClassCustom apartmentClassCustom :
+                        apartmentClassCustomList) {
+                    if (apartmentClassCustom.getApartmentClass().getId().equals(booking.getApartmentClass().getId())) {
+                        if (apartmentClassCustom.getCountOfApartments() == 0) {
+                            errors.rejectValue("apartmentClass", "", "Free apartment doesn't exist in this apartment Class");
+                        } else {
+                            booking.setTotalPrice(apartmentClassCustom.getApartmentPriceOnDates());
+                        }
                     }
                 }
             }

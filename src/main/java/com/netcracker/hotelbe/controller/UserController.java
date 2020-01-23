@@ -21,7 +21,7 @@ public class UserController {
     private UserService userService;
 
     @GetMapping
-    public ResponseEntity<List<User>> getAllUsers(@RequestParam Map<String,String> allParams) {
+    public ResponseEntity<List<User>> getAllUsers(@RequestParam Map<String, String> allParams) {
         return new ResponseEntity<>(userService.getAllByParams(allParams), HttpStatus.OK);
     }
 
@@ -32,7 +32,7 @@ public class UserController {
     }
 
     @GetMapping(params = "login")
-    public ResponseEntity<User> getUserByLogin(@RequestParam String login){
+    public ResponseEntity<User> getUserByLogin(@RequestParam String login) {
         return new ResponseEntity<>(userService.findByLogin(login), HttpStatus.OK);
     }
 
@@ -63,7 +63,8 @@ public class UserController {
     }
 
     @PatchMapping("/{id}")
-    public  ResponseEntity<User> patchById(@PathVariable("id") final Long id, @RequestBody Map<String, Object> updates) {
+    public ResponseEntity<User> patchById(@PathVariable("id") final Long id, @RequestBody Map<String, Object> updates) {
         return new ResponseEntity<>(userService.patch(id, updates), HttpStatus.OK);
     }
+
 }

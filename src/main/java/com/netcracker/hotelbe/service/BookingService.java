@@ -22,10 +22,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.Period;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 
 @Service
@@ -127,6 +124,7 @@ public class BookingService {
     }
 
     public void deleteById(Long id) {
+        bookingAddServicesShipService.deleteServicesByBookingId(id);
         Booking delete = bookingRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException(String.valueOf(id))
         );
@@ -329,6 +327,12 @@ public class BookingService {
         }
     }
 
+    public void validate(final List<Map<String, Long>> values, BindingResult bindingResult) throws MethodArgumentNotValidException {
+        for (Map<String, Long> val: values) {
+            this.validate(val, bindingResult);
+        }
+    }
+
     private List<ApartmentClassCustom> toApartmentClassCustom(List<Apartment> apartmentList, Map<String, Integer> apartmentClassReservedMap, Date startDate, Date endDate) {
         List<ApartmentClassCustom> apartmentClassCustomsList = new ArrayList<>();
         for (ApartmentClass apartmentClass :
@@ -401,6 +405,14 @@ public class BookingService {
         return bookingAddServicesId;
     }
 
+    public List<Long> addService (Long id, List<Map<String, Long>> services){
+        List<Long> bookingAddServicesIds = new LinkedList<>();
+        for (Map<String, Long> service: services) {
+            bookingAddServicesIds.add(this.addService(id, service));
+        }
+        return bookingAddServicesIds;
+    }
+
     public List<BookingAddServicesCustom> getServices(Long id) {
         Map<String, String> params = new HashMap<>();
         params.put("booking", id.toString());
@@ -429,4 +441,6 @@ public class BookingService {
         booking.setTotalPrice(calculateBookingTotalApartmentPrice(booking));
         save(booking);
     }
+
+
 }

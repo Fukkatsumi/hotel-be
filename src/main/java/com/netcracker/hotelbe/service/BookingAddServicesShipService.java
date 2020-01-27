@@ -75,4 +75,8 @@ public class BookingAddServicesShipService {
 
         return bookingAddServicesShipRepository.save((BookingAddServicesShip) entityService.fillFields(updates, bookingAddServicesShip));
     }
+
+    public void deleteServicesByBookingId(Long id){
+        bookingAddServicesShipRepository.deleteAllByBooking_Id(id);
+    }
 }

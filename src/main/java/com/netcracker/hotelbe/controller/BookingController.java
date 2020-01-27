@@ -3,11 +3,14 @@ package com.netcracker.hotelbe.controller;
 import com.netcracker.hotelbe.entity.ApartmentClassCustom;
 import com.netcracker.hotelbe.entity.Booking;
 import com.netcracker.hotelbe.entity.BookingAddServicesCustom;
+import com.netcracker.hotelbe.service.BookingAddServicesShipService;
 import com.netcracker.hotelbe.service.BookingService;
 import com.netcracker.hotelbe.utils.RuntimeExceptionHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
@@ -24,6 +27,9 @@ public class BookingController {
     @Autowired
     private BookingService bookingService;
 
+    @Autowired
+    private BookingAddServicesShipService bookingAddServicesShipService;
+
     @GetMapping
     public ResponseEntity<List<Booking>> getAll(@RequestParam Map<String, String> allParams) {
         return new ResponseEntity<>(bookingService.getAllByParams(allParams), HttpStatus.OK);
@@ -31,6 +37,7 @@ public class BookingController {
 
     @PostMapping
     public ResponseEntity<Booking> create(@RequestBody @Valid Booking booking, BindingResult bindingResult) throws MethodArgumentNotValidException {
+        System.out.println("got booking");
         bookingService.validate(booking, bindingResult);
         try {
             return new ResponseEntity<>(bookingService.save(booking),
@@ -81,6 +88,19 @@ public class BookingController {
         }
     }
 
+    @PostMapping("/{id}/servicesList")
+    public ResponseEntity<List<Long>> addMultipleService(@PathVariable("id") Long id, @RequestBody List<Map<String, Long>> values, BindingResult bindingResult) throws MethodArgumentNotValidException {
+        bookingService.validate(values, bindingResult);
+        try {
+            return new ResponseEntity<>(bookingService.addService(id, values), HttpStatus.OK);
+        } catch (RuntimeException e) {
+            return RuntimeExceptionHandler.handlePSQLException(e);
+        }
+    }
+
+
+
+
     @GetMapping("/{id}/services")
     public ResponseEntity<List<BookingAddServicesCustom>> getServices(@PathVariable("id") Long id) {
         return new ResponseEntity<>(bookingService.getServices(id), HttpStatus.OK);
@@ -89,6 +109,12 @@ public class BookingController {
     @DeleteMapping("/{id}/services/{serviceId}")
     public ResponseEntity deleteService(@PathVariable Long id, @PathVariable Long serviceId) throws Throwable {
         bookingService.deleteService(id, serviceId);
+        return new ResponseEntity(HttpStatus.OK);
+    }
+
+    @DeleteMapping("/{id}/services")
+    public ResponseEntity deleteMultipleServices(@PathVariable Long id){
+        bookingAddServicesShipService.deleteServicesByBookingId(id);
         return new ResponseEntity(HttpStatus.OK);
     }
 }

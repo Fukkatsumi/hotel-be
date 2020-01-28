@@ -4,6 +4,7 @@ import java.io.Serializable;
 
 public enum BookingStatus implements Serializable {
     Created("Created"),
+    Confirmed("Confirmed"),
     CheckedIn("CheckedIn"),
     Closed("Closed"),
     Canceled("Canceled");

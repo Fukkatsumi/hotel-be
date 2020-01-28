@@ -578,56 +578,12 @@ public class BookingService {
     }
 
 
-public Long addService(Long id, Map<String, Long> bookingAddServices) {
-        Booking booking = findById(id);
-        BookingAddServices bookingAddService = bookingAddServicesService.findById(bookingAddServices.get("id"));
-        int countServices = bookingAddServices.get("countServices").intValue();
-        BookingAddServicesShip bookingAddServicesShip = new BookingAddServicesShip();
-        bookingAddServicesShip.setBooking(booking);
-        bookingAddServicesShip.setBookingAddServices(bookingAddService);
-        bookingAddServicesShip.setCountServices(countServices);
-        Long bookingAddServicesId = bookingAddServicesShipService.save(bookingAddServicesShip).getId();
-        booking.setTotalPrice(booking.getTotalPrice() + calculateBookingTotalServicesPrice(booking));
-        save(booking);
-
-        return bookingAddServicesId;
-    }
-
     public List<Long> addService (Long id, List<Map<String, Long>> services){
         List<Long> bookingAddServicesIds = new LinkedList<>();
         for (Map<String, Long> service: services) {
             bookingAddServicesIds.add(this.addService(id, service));
         }
         return bookingAddServicesIds;
-    }
-
-    public List<BookingAddServicesCustom> getServices(Long id) {
-        Map<String, String> params = new HashMap<>();
-        params.put("booking", id.toString());
-        List<BookingAddServicesCustom> bookingAddServiceCustoms = new ArrayList<>();
-        List<BookingAddServicesShip> bookingAddServicesShips = bookingAddServicesShipService.getAllByParams(params);
-        bookingAddServicesShips.forEach(bookingAddServicesShip -> {
-            BookingAddServicesCustom bookingService = new BookingAddServicesCustom();
-            bookingService.setBookingAddServices(bookingAddServicesShip.getBookingAddServices());
-            bookingService.setCountServices(bookingAddServicesShip.getCountServices());
-            bookingAddServiceCustoms.add(bookingService);
-        });
-
-        return bookingAddServiceCustoms;
-    }
-
-    public void deleteService(Long id, Long serviceId) throws Throwable {
-        Map<String, String> values = new HashMap<>();
-        values.put("booking", id.toString());
-        values.put("bookingAddServices", serviceId.toString());
-
-        BookingAddServicesShip bookingAddServicesShip = bookingAddServicesShipService.findOneByFilter(values);
-
-        bookingAddServicesShipService.deleteById(bookingAddServicesShip.getId());
-
-        Booking booking = findById(id);
-        booking.setTotalPrice(calculateBookingTotalApartmentPrice(booking));
-        save(booking);
     }
 
 }

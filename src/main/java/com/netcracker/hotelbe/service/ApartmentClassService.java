@@ -45,7 +45,7 @@ public class ApartmentClassService {
         if (allParams.size() != 0) {
             return apartmentClassRepository.findAll(filterService.fillFilter(allParams, ApartmentClass.class));
         } else {
-            return apartmentClassRepository.findAll();
+            return apartmentClassRepository.findAllNative();
         }
     }
 

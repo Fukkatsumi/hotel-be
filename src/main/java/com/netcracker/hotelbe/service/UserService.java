@@ -30,7 +30,7 @@ public class UserService {
         if (allParams.size() != 0) {
             return userRepository.findAll(filterService.fillFilter(allParams, User.class));
         } else {
-            return userRepository.findAll();
+            return userRepository.findAllNative();
         }
     }
 

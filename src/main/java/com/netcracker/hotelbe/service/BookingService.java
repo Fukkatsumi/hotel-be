@@ -26,6 +26,7 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.time.Period;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 
 @Service
@@ -96,6 +97,19 @@ public class BookingService {
         Timestamp showCreatedDate = entityService.correctingTimestamp(showBooking.getCreatedDate(), MathOperation.PLUS, UnitOfTime.HOUR, 2);
 
         showBooking.setCreatedDate(showCreatedDate);
+
+        Runnable task = ()->{
+            try {
+                TimeUnit.MINUTES.sleep(15);
+                deleteCreatedBookingById(booking.getId());
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        };
+
+        Thread deletedThread = new Thread(task);
+        deletedThread.start();
+
         return showBooking;
     }
 
@@ -180,6 +194,10 @@ public class BookingService {
         booking.setStartDate(entityService.correctingDate(booking.getStartDate(), MathOperation.PLUS, 1));
         booking.setEndDate(entityService.correctingDate(booking.getEndDate(), MathOperation.PLUS, 1));
         return booking;
+    }
+
+    public void deleteCreatedBookingById(Long id){
+        bookingRepository.deleteCreatedBookingById(id);
     }
 
     public Long addService(Long id, Map<String, Long> bookingAddServices) {

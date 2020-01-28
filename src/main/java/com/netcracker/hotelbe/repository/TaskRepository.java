@@ -27,6 +27,10 @@ public interface TaskRepository extends JpaRepository<Task, Long>, JpaSpecificat
     @Query("UPDATE Task t SET t.executor = :executor WHERE t.id = :task_id")
     void setExecutorByTaskId(@Param("task_id") Long id, @Param("executor") Staff executor);
 
+    @Query(value = "SELECT t.id, t.start_date, t.end_date, t.accept_date, t.complete_date, t.description, t.task_status, t.apartment_id, t.executor_id, t.creator_id FROM tasks t",
+            nativeQuery = true)
+    List<Task> findAllNative();
+
     List<Task> getAllByExecutor(Staff staff);
 
     List<Task> getAllByCreator(Staff staff);

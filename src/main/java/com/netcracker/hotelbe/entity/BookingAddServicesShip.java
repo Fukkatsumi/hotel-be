@@ -19,6 +19,7 @@ public class BookingAddServicesShip implements Serializable {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
+
     @ManyToOne
     @JoinColumn(name = "booking_id")
     private Booking booking;

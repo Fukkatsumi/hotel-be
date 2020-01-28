@@ -130,7 +130,7 @@ public class BookingService {
         if (allParams.size() != 0) {
             bookings = bookingRepository.findAll(filterService.fillFilter(allParams, Booking.class));
         } else {
-            bookings = bookingRepository.findAll();
+            bookings = bookingRepository.findAllNative();
         }
         bookings.forEach(this::correctingDate);
         return bookings;

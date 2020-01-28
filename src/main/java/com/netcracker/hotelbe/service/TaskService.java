@@ -47,7 +47,7 @@ public class TaskService {
         if (allParams.size() != 0) {
             tasks = taskRepository.findAll(filterService.fillFilter(allParams, Task.class));
         } else {
-            tasks = taskRepository.findAll();
+            tasks = taskRepository.findAllNative();
         }
         tasks.forEach(this::correctingDate);
 

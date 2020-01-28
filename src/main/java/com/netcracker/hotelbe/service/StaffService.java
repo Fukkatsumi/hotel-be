@@ -43,7 +43,7 @@ public class StaffService {
         if(allParams.size()!=0) {
             return staffRepository.findAll(filterService.fillFilter(allParams, Staff.class));
         } else {
-            return staffRepository.findAll();
+            return staffRepository.findAllNative();
         }
     }
 

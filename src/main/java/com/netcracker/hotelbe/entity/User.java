@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.netcracker.hotelbe.entity.enums.UserRole;
 import lombok.Data;
+import lombok.ToString;
 import org.hibernate.annotations.Type;
 
 import javax.persistence.*;
@@ -64,6 +65,7 @@ public class User {
 
     @JsonBackReference
     @OneToOne(cascade = CascadeType.ALL, mappedBy = "user")
+    @ToString.Exclude
     private Staff staff;
 
     @JsonIgnore

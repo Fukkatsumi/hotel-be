@@ -1,5 +1,6 @@
 package com.netcracker.hotelbe.service;
 
+import com.netcracker.hotelbe.entity.Booking;
 import com.netcracker.hotelbe.entity.BookingAddServicesShip;
 import com.netcracker.hotelbe.repository.BookingAddServicesShipRepository;
 import com.netcracker.hotelbe.service.filter.FilterService;
@@ -7,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -76,6 +78,16 @@ public class BookingAddServicesShipService {
         return bookingAddServicesShipRepository.save((BookingAddServicesShip) entityService.fillFields(updates, bookingAddServicesShip));
     }
 
+    public void deleteByBooking(Booking booking){
+        Map<String, String> values = new HashMap<>();
+        values.put("booking", String.valueOf(booking.getId()));
+
+        List<BookingAddServicesShip> bookingAddServicesShips = getAllByParams(values);
+        bookingAddServicesShips.forEach(bookingAddServicesShip -> {
+            deleteById(bookingAddServicesShip.getId());
+        });
+    }
+  
     public void deleteServicesByBookingId(Long id){
         bookingAddServicesShipRepository.deleteAllByBooking_Id(id);
     }

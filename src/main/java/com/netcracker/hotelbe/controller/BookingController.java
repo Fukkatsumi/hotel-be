@@ -1,5 +1,6 @@
 package com.netcracker.hotelbe.controller;
 
+import com.netcracker.hotelbe.entity.Apartment;
 import com.netcracker.hotelbe.entity.ApartmentClassCustom;
 import com.netcracker.hotelbe.entity.Booking;
 import com.netcracker.hotelbe.entity.BookingAddServicesCustom;
@@ -16,6 +17,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -49,7 +51,7 @@ public class BookingController {
 
     @GetMapping("/{id}")
     public ResponseEntity<Booking> getById(@PathVariable("id") final Long id) {
-        return new ResponseEntity<>(bookingService.findById(id), HttpStatus.OK);
+        return new ResponseEntity<>(bookingService.getById(id), HttpStatus.OK);
     }
 
     @PutMapping("/{id}")
@@ -68,9 +70,20 @@ public class BookingController {
         return new ResponseEntity(HttpStatus.OK);
     }
 
+    @DeleteMapping("/{id}/cascade")
+    public ResponseEntity cascadeDeleteById(@PathVariable("id") Long id){
+        bookingService.cascadeDeleteById(id);
+        return new ResponseEntity(HttpStatus.OK);
+    }
+
     @GetMapping("/find")
     public ResponseEntity<List<ApartmentClassCustom>> findFreeApartments(@RequestParam String startDate, @RequestParam String endDate) {
         return new ResponseEntity<>(bookingService.findFreeApartments(startDate, endDate), HttpStatus.OK);
+    }
+
+    @GetMapping("/findList")
+    public ResponseEntity<List<Apartment>> findFreeApartments(@RequestParam String startDate, @RequestParam String endDate, @RequestParam String apartmentClass) {
+        return new ResponseEntity<>(bookingService.findFreeApartmentsForApartmentClass(startDate, endDate, Long.parseLong(apartmentClass)), HttpStatus.OK);
     }
 
     @PatchMapping("/{id}")
@@ -88,6 +101,11 @@ public class BookingController {
         }
     }
 
+    @PatchMapping("/{id}/services/recalculation")
+    public ResponseEntity<Integer> recalculationBookingPrice(@PathVariable("id") Long id){
+        return new ResponseEntity<>(bookingService.recalculatePrice(id), HttpStatus.OK);
+    }
+  
     @PostMapping("/{id}/servicesList")
     public ResponseEntity<List<Long>> addMultipleService(@PathVariable("id") Long id, @RequestBody List<Map<String, Long>> values, BindingResult bindingResult) throws MethodArgumentNotValidException {
         bookingService.validate(values, bindingResult);
@@ -97,9 +115,6 @@ public class BookingController {
             return RuntimeExceptionHandler.handlePSQLException(e);
         }
     }
-
-
-
 
     @GetMapping("/{id}/services")
     public ResponseEntity<List<BookingAddServicesCustom>> getServices(@PathVariable("id") Long id) {

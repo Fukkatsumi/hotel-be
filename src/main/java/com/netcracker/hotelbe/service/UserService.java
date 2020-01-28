@@ -22,32 +22,32 @@ public class UserService {
     @Autowired
     private EntityService entityService;
 
-    public List<User> findAll(){
+    public List<User> findAll() {
         return userRepository.findAll();
     }
 
     public List<User> getAllByParams(Map<String, String> allParams) {
-        if(allParams.size()!=0) {
+        if (allParams.size() != 0) {
             return userRepository.findAll(filterService.fillFilter(allParams, User.class));
         } else {
-            return userRepository.findAll();
+            return userRepository.findAllNative();
         }
     }
 
-    public User findById(Long id){
+    public User findById(Long id) {
         return userRepository.findById(id).orElseThrow(
-                ()->new EntityNotFoundException(String.valueOf(id))
+                () -> new EntityNotFoundException(String.valueOf(id))
         );
     }
 
-    public User findByLogin(String login){
+    public User findByLogin(String login) {
         return userRepository.findByLogin(login).orElseThrow(
-                ()->new EntityNotFoundException("No entity with login=" + login + " found")
+                () -> new EntityNotFoundException("No entity with login=" + login + " found")
         );
     }
 
-    public void deleteById(Long id){
-        if (!userRepository.findById(id).isPresent()){
+    public void deleteById(Long id) {
+        if (!userRepository.findById(id).isPresent()) {
             throw new EntityNotFoundException(String.valueOf(id));
         }
         userRepository.deleteById(id);
@@ -61,11 +61,11 @@ public class UserService {
         return userRepository.save((User) entityService.fillFields(updates, user));
     }
 
-    public User save(User user){
+    public User save(User user) {
         return userRepository.save(user);
     }
 
-    public User update(User user, Long id){
+    public User update(User user, Long id) {
         userRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException(String.valueOf(id))
         );

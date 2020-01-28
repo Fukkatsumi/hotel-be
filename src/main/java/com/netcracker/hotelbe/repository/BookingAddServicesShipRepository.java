@@ -12,4 +12,7 @@ public interface BookingAddServicesShipRepository extends JpaRepository<BookingA
     @Transactional(readOnly = true)
     @Override
     Optional<BookingAddServicesShip> findById(Long id);
+
+    @Transactional
+    void deleteAllByBooking_Id(Long aLong);
 }

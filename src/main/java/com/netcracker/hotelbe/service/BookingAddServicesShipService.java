@@ -87,4 +87,8 @@ public class BookingAddServicesShipService {
             deleteById(bookingAddServicesShip.getId());
         });
     }
+  
+    public void deleteServicesByBookingId(Long id){
+        bookingAddServicesShipRepository.deleteAllByBooking_Id(id);
+    }
 }

@@ -6,6 +6,7 @@ public enum BookingStatus implements Serializable {
     Created("Created"),
     Confirmed("Confirmed"),
     CheckedIn("CheckedIn"),
+    Confirmed("Confirmed"),
     Closed("Closed"),
     Canceled("Canceled");
 

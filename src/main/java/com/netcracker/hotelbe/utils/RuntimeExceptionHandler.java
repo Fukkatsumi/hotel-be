@@ -17,7 +17,7 @@ public class RuntimeExceptionHandler {
             throw runtimeException;
         } else {
             String logMessage = rootCause.getMessage();
-            String responseMessage = logMessage.split("Detail: ")[1];
+            String responseMessage = logMessage.split("Detail: ")[0];
 
             if (LOG.getLevel() == Level.ERROR) {
                 LOG.error(logMessage);

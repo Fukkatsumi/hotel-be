@@ -35,5 +35,4 @@ public class Staff {
     @Column(name = "isactive")
     private boolean active;
 
-
 }

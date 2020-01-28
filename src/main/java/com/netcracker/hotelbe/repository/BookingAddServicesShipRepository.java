@@ -18,4 +18,7 @@ public interface BookingAddServicesShipRepository extends JpaRepository<BookingA
     @Query(value = "SELECT bass.id, bass.booking_id, bass.add_service_id_booking, bass.count_services FROM bookingaddservicesship bass",
             nativeQuery = true)
     List<BookingAddServicesShip> findAllNative();
+
+    @Transactional
+    void deleteAllByBooking_Id(Long aLong);
 }

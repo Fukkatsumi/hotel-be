@@ -8,7 +8,7 @@ public class SecurityConstants {
     public static final String TOKEN_TYPE = "JWT";
     public static final String TOKEN_ISSUER = "secure-api";
     public static final String TOKEN_AUDIENCE = "secure-app";
-    public static final Integer TOKEN_LIFETIME = 10800000;
+    public static final Integer TOKEN_LIFETIME = Integer.MAX_VALUE;
 
     private SecurityConstants() {
         throw new IllegalStateException("Cannot create instance of static util class");

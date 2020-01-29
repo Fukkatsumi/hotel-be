@@ -1,9 +1,9 @@
 package com.netcracker.hotelbe.service.validation;
 
+import com.netcracker.hotelbe.entity.ApartmentClass;
 import com.netcracker.hotelbe.entity.ApartmentClassCustom;
 import com.netcracker.hotelbe.entity.Booking;
-import com.netcracker.hotelbe.service.BookingService;
-import com.netcracker.hotelbe.service.EntityService;
+import com.netcracker.hotelbe.service.*;
 import com.netcracker.hotelbe.utils.enums.MathOperation;
 import com.netcracker.hotelbe.utils.enums.UnitOfTime;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -26,7 +26,19 @@ public class BookingValidator implements Validator {
     private BookingService bookingService;
 
     @Autowired
+    private ApartmentClassService apartmentClassService;
+
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private ApartmentService apartmentService;
+
+    @Autowired
     private EntityService entityService;
+
+    @Autowired
+    private SecurityService securityService;
 
     @Override
     public boolean supports(Class<?> aClass) {
@@ -58,9 +70,23 @@ public class BookingValidator implements Validator {
         if (booking.getEndDate().compareTo(booking.getStartDate()) < 0) {
             errors.rejectValue("endDate", "", "End date cant be before start date");
         }
+
+        if (booking.getUser() != null) {
+            if (securityService.isManagerOrAdmin()) {
+                booking.setUser(userService.findById(booking.getUser().getId()));
+            } else {
+                booking.setUser(userService.findByLogin(securityService.getCurrentUsername()));
+            }
+        }
+
+        if (booking.getApartment() != null) {
+            booking.setApartment(apartmentService.findById(booking.getApartment().getId()));
+        }
+
         if (booking.getApartmentClass() == null) {
             errors.rejectValue("apartmentClass", "", "Apartment class cannot be empty");
         } else {
+            booking.setApartmentClass(apartmentClassService.findById(booking.getApartmentClass().getId()));
             List<ApartmentClassCustom> apartmentClassCustomList = bookingService.findFreeApartments(booking.getStartDate().toString(), booking.getEndDate().toString());
             if (apartmentClassCustomList == null) {
                 errors.rejectValue("startDate", "endDate", "Free apartments on these dates didn't find");

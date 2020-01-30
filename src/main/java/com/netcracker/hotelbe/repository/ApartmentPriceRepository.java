@@ -15,7 +15,7 @@ public interface ApartmentPriceRepository extends JpaRepository<ApartmentPrice, 
     @Override
     Optional<ApartmentPrice> findById(Long id);
 
-    @Query(value = "SELECT ap.id, ap.price, ap.start_period, ap.end_period FROM apartmentprices ap",
+    @Query(value = "SELECT ap.id, ap.price, ap.start_period, ap.end_period, ap.apartment_class_id FROM apartmentprices ap",
             nativeQuery = true)
     List<ApartmentPrice> findAllNative();
 }

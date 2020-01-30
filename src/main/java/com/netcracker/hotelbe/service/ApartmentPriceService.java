@@ -37,7 +37,7 @@ public class ApartmentPriceService {
     private EntityService entityService;
 
     public List<ApartmentPrice> findAll() {
-        List<ApartmentPrice> apartmentPrices = apartmentPriceRepository.findAll();
+        List<ApartmentPrice> apartmentPrices = apartmentPriceRepository.findAllNative();
         return apartmentPrices;
     }
 

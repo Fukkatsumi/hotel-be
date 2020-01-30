@@ -1,6 +1,5 @@
 package com.netcracker.hotelbe.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.netcracker.hotelbe.entity.enums.ApartmentStatus;
 import com.netcracker.hotelbe.utils.PostgreSQLEnumType;
@@ -10,7 +9,6 @@ import org.hibernate.annotations.TypeDef;
 
 import javax.persistence.*;
 import java.io.Serializable;
-import java.util.List;
 
 @Data
 @Entity
@@ -42,16 +40,8 @@ public class Apartment implements Serializable {
     @Type( type = "pgsql_enum" )
     private ApartmentStatus status;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name="class_room")
     private ApartmentClass apartmentClass;
-
-    @JsonIgnore
-    @OneToMany(mappedBy = "apartment", fetch = FetchType.LAZY)
-    private List<UnavailableApartment> unavailableApartments;
-
-    @JsonIgnore
-    @OneToMany(mappedBy = "apartment", fetch = FetchType.LAZY)
-    private List<Booking> bookings;
 
 }

@@ -17,7 +17,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long>, JpaSpec
     @Override
     Optional<Booking> findById(Long id);
 
-    @Query(value = "SELECT b.id, b.start_date, b.end_date, b.total_price, b.comments, b.created_date, b.review, b.booking_status FROM Bookings b",
+    @Query(value = "SELECT b.id, b.start_date, b.end_date, b.total_price, b.comments, b.created_date, b.review, b.booking_status, b.user_id, b.apartmentclass_id, b.apartment_id FROM Bookings b",
             nativeQuery = true)
     List<Booking> findAllNative();
 

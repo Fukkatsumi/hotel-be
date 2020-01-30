@@ -10,14 +10,11 @@ import com.netcracker.hotelbe.utils.RuntimeExceptionHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.core.Authentication;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
 
@@ -34,13 +31,12 @@ public class BookingController {
 
     @GetMapping
     public ResponseEntity<List<Booking>> getAll(@RequestParam Map<String, String> allParams) {
-        return new ResponseEntity<>(bookingService.getAllByParams(allParams), HttpStatus.OK);
+        return new ResponseEntity<>(bookingService.getAll(allParams), HttpStatus.OK);
     }
 
     @PostMapping
     public ResponseEntity<Booking> create(@RequestBody @Valid Booking booking, BindingResult bindingResult) throws MethodArgumentNotValidException {
-        System.out.println("got booking");
-        bookingService.validate(booking, bindingResult);
+        bookingService.validateBooking(booking, bindingResult);
         try {
             return new ResponseEntity<>(bookingService.save(booking),
                     HttpStatus.CREATED);
@@ -56,7 +52,7 @@ public class BookingController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Booking> update(@RequestBody @Valid Booking booking, @PathVariable("id") final Long id, BindingResult bindingResult) throws MethodArgumentNotValidException {
-        bookingService.validate(booking, bindingResult);
+        bookingService.validateBooking(booking, bindingResult);
         try {
             return new ResponseEntity<>(bookingService.update(booking, id), HttpStatus.OK);
         } catch (RuntimeException e) {
@@ -93,7 +89,7 @@ public class BookingController {
 
     @PostMapping("/{id}/services")
     public ResponseEntity<Long> addService(@PathVariable("id") Long id, @RequestBody @Valid Map<String, Long> values, BindingResult bindingResult) throws MethodArgumentNotValidException {
-        bookingService.validate(values, bindingResult);
+        bookingService.validateService(values, bindingResult);
         try {
             return new ResponseEntity<>(bookingService.addService(id, values), HttpStatus.OK);
         } catch (RuntimeException e) {
@@ -108,7 +104,7 @@ public class BookingController {
   
     @PostMapping("/{id}/servicesList")
     public ResponseEntity<List<Long>> addMultipleService(@PathVariable("id") Long id, @RequestBody List<Map<String, Long>> values, BindingResult bindingResult) throws MethodArgumentNotValidException {
-        bookingService.validate(values, bindingResult);
+        bookingService.validateServices(values, bindingResult);
         try {
             return new ResponseEntity<>(bookingService.addService(id, values), HttpStatus.OK);
         } catch (RuntimeException e) {

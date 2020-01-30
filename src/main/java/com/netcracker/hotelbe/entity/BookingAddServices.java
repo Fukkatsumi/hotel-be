@@ -1,12 +1,10 @@
 package com.netcracker.hotelbe.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.Data;
 
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import java.io.Serializable;
-import java.util.List;
 
 @Data
 @Entity
@@ -28,7 +26,4 @@ public class BookingAddServices implements Serializable {
     @Column(name = "price")
     private int price;
 
-    @JsonIgnore
-    @OneToMany(mappedBy = "bookingAddServices", fetch = FetchType.LAZY)
-    private List<BookingAddServicesShip> bookingAddServicesShips;
 }

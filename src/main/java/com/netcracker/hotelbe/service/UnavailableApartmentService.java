@@ -48,7 +48,7 @@ public class UnavailableApartmentService {
         if(allParams.size()!=0) {
             unavailableApartments = unavailableApartmentRepository.findAll(filterService.fillFilter(allParams, UnavailableApartment.class));
         } else {
-            unavailableApartments = unavailableApartmentRepository.findAll();
+            unavailableApartments = unavailableApartmentRepository.findAllNative();
         }
         unavailableApartments.forEach(this::correctingDate);
 

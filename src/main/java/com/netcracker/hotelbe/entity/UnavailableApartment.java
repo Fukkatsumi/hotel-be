@@ -30,7 +30,7 @@ public class UnavailableApartment {
     @Column(name = "cause_description")
     private String causeDescription;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "id_apartment")
     private Apartment apartment;
 

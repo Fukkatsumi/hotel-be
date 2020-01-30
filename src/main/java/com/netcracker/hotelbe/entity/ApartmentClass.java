@@ -1,13 +1,11 @@
 package com.netcracker.hotelbe.entity;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 
 import javax.persistence.*;
 import javax.validation.constraints.Min;
 import java.io.Serializable;
-import java.util.List;
 import java.util.Objects;
 
 @Data
@@ -32,21 +30,6 @@ public class ApartmentClass implements Serializable {
     @Column(name = "number_of_couchette")
     @Min(value = 1, message = "Number of couchette cant be less then 1")
     private int numberOfCouchette;
-
-    @JsonIgnore
-//    @ToString.Exclude
-    @OneToMany(mappedBy = "apartmentClass", fetch = FetchType.LAZY)
-    private List<Apartment> apartments;
-
-    @JsonIgnore
-//    @ToString.Exclude
-    @OneToMany(mappedBy = "apartmentClass", fetch = FetchType.LAZY)
-    private List<ApartmentPrice> apartmentPrices;
-
-    @JsonIgnore
-//    @ToString.Exclude
-    @OneToMany(mappedBy = "apartmentClass", fetch = FetchType.LAZY)
-    private List<Booking> bookings;
 
     @Override
     public boolean equals(Object o) {

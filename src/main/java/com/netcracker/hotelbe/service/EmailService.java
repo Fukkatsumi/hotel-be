@@ -30,7 +30,7 @@ public class EmailService {
         User user = userService.findById(id);
 
         Email email = new Email();
-        email.setSubject("Hotel: info about user: " + user.getId());
+        email.setSubject("Hotel: your credential");
         email.setText(String.format(USER_CREDENTIAL, user.getFirstname(), user.getLogin(), user.getPassword()));
 
         send(email, user.getEmail());

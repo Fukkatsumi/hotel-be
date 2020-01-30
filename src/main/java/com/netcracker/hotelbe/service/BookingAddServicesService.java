@@ -36,7 +36,7 @@ public class BookingAddServicesService {
         if(allParams.size()!=0) {
             return bookingAddServicesRepository.findAll(filterService.fillFilter(allParams, BookingAddServices.class));
         } else {
-            return bookingAddServicesRepository.findAll();
+            return bookingAddServicesRepository.findAllNative();
         }
     }
 

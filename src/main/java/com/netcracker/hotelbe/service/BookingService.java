@@ -1,7 +1,6 @@
 package com.netcracker.hotelbe.service;
 
 import com.netcracker.hotelbe.entity.*;
-import com.netcracker.hotelbe.entity.enums.UserRole;
 import com.netcracker.hotelbe.exception.CustomResponseEntityException;
 import com.netcracker.hotelbe.repository.BookingRepository;
 import com.netcracker.hotelbe.service.filter.FilterService;
@@ -12,7 +11,7 @@ import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.Validator;
@@ -65,6 +64,9 @@ public class BookingService {
     private EntityService entityService;
 
     @Autowired
+    private SecurityService securityService;
+
+    @Autowired
     @Qualifier("bookingValidator")
     private Validator bookingValidator;
 
@@ -73,70 +75,349 @@ public class BookingService {
     private Validator bookingAddServiceValidator;
 
     public List<Booking> getAll() {
-        List<Booking> bookings = bookingRepository.findAll();
+        List<Booking> bookings;
+        if (securityService.isManagerOrAdmin()) {
+            bookings = findAll();
+        } else {
+            bookings = findMy();
+        }
+
         bookings.forEach(this::correctingDate);
 
         return bookings;
     }
 
-    public Booking save(final Booking booking) {
-        final ApartmentClass apartmentClass = apartmentClassService.findById(booking.getApartmentClass().getId());
-        booking.setApartmentClass(apartmentClass);
-        User user = booking.getUser();
-        if (user != null) {
-            user = userService.findById(user.getId());
-            booking.setUser(user);
-        }
-        Apartment apartment = booking.getApartment();
-        if (apartment != null) {
-            apartment = apartmentService.findById(apartment.getId());
-        }
-        booking.setApartment(apartment);
-
-        Booking showBooking = bookingRepository.save(booking);
-        Timestamp showCreatedDate = entityService.correctingTimestamp(showBooking.getCreatedDate(), MathOperation.PLUS, UnitOfTime.HOUR, 2);
-
-        showBooking.setCreatedDate(showCreatedDate);
-
-        Runnable task = ()->{
-            try {
-                TimeUnit.MINUTES.sleep(15);
-                deleteCreatedBookingById(booking.getId());
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+    public List<Booking> getAll(Map<String, String> allParams) {
+        List<Booking> bookings;
+        if (securityService.isManagerOrAdmin()) {
+            if (allParams.size() != 0) {
+                bookings = findAll(allParams);
+            } else {
+                bookings = bookingRepository.findAllNative();
             }
-        };
+        } else {
+            bookings = findMy(allParams);
+        }
 
-        Thread deletedThread = new Thread(task);
-        deletedThread.start();
+        bookings.forEach(this::correctingDate);
 
-        return showBooking;
+        return bookings;
     }
 
-    public Booking findById(Long id) {
+    public Booking getById(Long id) {
+        Booking booking = getNotForbiddenBooking(id);
+
+        if (booking != null) {
+            booking = correctingDate(booking);
+        }
+        return booking;
+    }
+
+    public Booking save(final Booking booking) {
+        Booking correctedBooking = bookingRepository.save(booking);
+
+        Timestamp showCreatedDate = entityService.correctingTimestamp(correctedBooking.getCreatedDate(), MathOperation.PLUS, UnitOfTime.HOUR, 2);
+        correctedBooking.setCreatedDate(showCreatedDate);
+
+        Thread deleteCreatedBooking = getThreadToDeleteCreatedBooking(correctedBooking.getId());
+        deleteCreatedBooking.start();
+
+        return correctedBooking;
+    }
+
+    public Booking update(Booking booking, Long id) {
+        if (securityService.isManagerOrAdmin()) {
+            if (findById(id) != null) {
+                if (booking.getApartment() != null) {
+                    booking.setApartment(validateBookingApartment(booking.getApartment().getId(), booking));
+                } else {
+                    throw new EntityNotFoundException("null");
+                }
+                booking.setId(id);
+
+                Booking correctedBooking = bookingRepository.save(booking);
+                Timestamp showCreatedDate = entityService.correctingTimestamp(correctedBooking.getCreatedDate(), MathOperation.PLUS, UnitOfTime.HOUR, 2);
+
+                correctedBooking.setCreatedDate(showCreatedDate);
+
+                return correctedBooking;
+            } else {
+                throw new EntityNotFoundException(String.valueOf(id));
+            }
+        } else {
+            throw new CustomResponseEntityException("You do not have permission to perform this action", HttpStatus.FORBIDDEN);
+        }
+    }
+
+    public void deleteById(Long id) {
+        if (securityService.isManagerOrAdmin()) {
+            bookingAddServicesShipService.deleteServicesByBookingId(id);
+            Booking delete = bookingRepository.findById(id).orElseThrow(
+                    () -> new EntityNotFoundException(String.valueOf(id))
+            );
+
+            bookingRepository.delete(delete);
+        } else {
+            deleteMyById(id);
+        }
+
+    }
+
+    public Booking patch(Long id, Map<String, Object> updates) {
+        Booking booking;
+        if (securityService.isManagerOrAdmin()) {
+            booking = findById(id);
+            if (updates.containsKey("apartment")) {
+                long idApartment = Long.parseLong(updates.get("apartment").toString());
+                Apartment apartment = validateBookingApartment(idApartment, booking);
+                updates.replace("apartment", apartment);
+            }
+            if (updates.containsKey("user")) {
+                Long idUser = Long.valueOf(updates.get("user").toString());
+                User user = userService.findById(idUser);
+                updates.replace("user", user);
+            }
+
+            booking = bookingRepository.save((Booking) entityService.fillFields(updates, booking));
+            booking.setStartDate(entityService.correctingDate(booking.getStartDate(), MathOperation.PLUS, 1));
+            booking.setEndDate(entityService.correctingDate(booking.getEndDate(), MathOperation.PLUS, 1));
+        } else {
+            booking = findMyById(id);
+            Map<String, Object> values = new HashMap<>();
+            if (updates.containsKey("comment")) {
+                values.put("comment", updates.get("comment"));
+            }
+            if (updates.containsKey("review")) {
+                values.put("review", updates.get("review"));
+            }
+            if (updates.containsKey("bookingStatus")) {
+                values.put("bookingStatus", updates.get("bookingStatus"));
+            }
+            if (updates.size() != 0) {
+                booking = bookingRepository.save((Booking) entityService.fillFields(values, booking));
+
+                booking.setStartDate(entityService.correctingDate(booking.getStartDate(), MathOperation.PLUS, 1));
+                booking.setEndDate(entityService.correctingDate(booking.getEndDate(), MathOperation.PLUS, 1));
+            }
+        }
+
+        return booking;
+    }
+
+    public Long addService(Long id, Map<String, Long> bookingAddServices) {
+        Booking booking = getNotForbiddenBooking(id);
+
+        if (booking != null) {
+            BookingAddServices bookingAddService = bookingAddServicesService.findById(bookingAddServices.get("id"));
+
+            int countServices = bookingAddServices.get("countServices").intValue();
+
+            BookingAddServicesShip bookingAddServicesShip = new BookingAddServicesShip();
+            bookingAddServicesShip.setBooking(booking);
+            bookingAddServicesShip.setBookingAddServices(bookingAddService);
+            bookingAddServicesShip.setCountServices(countServices);
+
+            Long bookingAddServicesId = bookingAddServicesShipService.save(bookingAddServicesShip).getId();
+            booking.setTotalPrice(booking.getTotalPrice() + bookingAddService.getPrice() * countServices);
+
+            save(booking);
+            return bookingAddServicesId;
+        } else {
+            throw new CustomResponseEntityException("You cannot add a service to this booking", HttpStatus.FORBIDDEN);
+        }
+    }
+
+    public List<Long> addService(Long id, List<Map<String, Long>> services) {
+        List<Long> bookingAddServicesIds = new LinkedList<>();
+        for (Map<String, Long> service : services) {
+            bookingAddServicesIds.add(this.addService(id, service));
+        }
+        return bookingAddServicesIds;
+    }
+
+    public List<BookingAddServicesCustom> getServices(Long bookingId) {
+        Booking booking = bookingRepository.getOne(bookingId);
+
+        if (booking != null) {
+            Map<String, String> params = new HashMap<>();
+            params.put("booking", String.valueOf(booking.getId()));
+
+            List<BookingAddServicesCustom> bookingAddServiceCustoms = new ArrayList<>();
+            List<BookingAddServicesShip> bookingAddServicesShips = bookingAddServicesShipService.getAllByParams(params);
+            bookingAddServicesShips.forEach(bookingAddServicesShip -> {
+                BookingAddServicesCustom bookingService = new BookingAddServicesCustom();
+                bookingService.setBookingAddServices(bookingAddServicesShip.getBookingAddServices());
+                bookingService.setCountServices(bookingAddServicesShip.getCountServices());
+                bookingAddServiceCustoms.add(bookingService);
+            });
+
+            return bookingAddServiceCustoms;
+        } else {
+            throw new CustomResponseEntityException("You cannot get services for this booking", HttpStatus.FORBIDDEN);
+        }
+    }
+
+    public void deleteService(Long id, Long serviceId) throws Throwable {
+        Booking booking = getNotForbiddenBooking(id);
+
+        if (booking != null) {
+            Map<String, String> values = new HashMap<>();
+            values.put("booking", id.toString());
+            values.put("bookingAddServices", serviceId.toString());
+
+            BookingAddServicesShip bookingAddServicesShip = bookingAddServicesShipService.findOneByFilter(values);
+
+            bookingAddServicesShipService.deleteById(bookingAddServicesShip.getId());
+
+            booking.setTotalPrice(calculateBookingTotalApartmentPrice(booking));
+            save(booking);
+        } else {
+            throw new CustomResponseEntityException("You cannot delete service for this booking", HttpStatus.FORBIDDEN);
+        }
+    }
+
+    public int recalculatePrice(Long id) {
+        Booking booking = getNotForbiddenBooking(id);
+
+        if (booking != null) {
+            int price = calculateBookingTotalApartmentPrice(booking);
+
+            if (price != booking.getTotalPrice()) {
+                booking.setTotalPrice(calculateBookingTotalApartmentPrice(booking));
+                save(booking);
+            }
+
+            return price;
+        } else {
+            throw new CustomResponseEntityException("You cannot recalculate price for this booking", HttpStatus.FORBIDDEN);
+        }
+    }
+
+    public void cascadeDeleteById(Long id) {
+        if (securityService.isManagerOrAdmin()) {
+
+            Booking booking = findById(id);
+
+            bookingAddServicesShipService.deleteByBooking(booking);
+
+            bookingRepository.delete(booking);
+        } else {
+            deleteMyById(id);
+        }
+    }
+
+    public List<Apartment> findFreeApartmentsForApartmentClass(String startDateStr, String endDateStr, Long idApClass) {
+        Date startDate = toDate(startDateStr);
+        Date endDate = toDate(endDateStr);
+        List<Apartment> apartmentList = checkUnavailableApartment(startDate, endDate);
+        if (apartmentList == null) {
+            return null;
+        }
+        apartmentList.removeIf(apartmentTemp -> !apartmentTemp.getApartmentClass().getId().equals(idApClass));
+        Map<String, String> mapApClass = new HashMap<>();
+        mapApClass.put("apartmentClass", idApClass.toString());
+        List<Booking> bookingList = findAll(mapApClass);
+        for (Booking booking :
+                bookingList) {
+            if ((startDate.compareTo(booking.getStartDate()) >= 0
+                    && (endDate.compareTo(booking.getEndDate()) <= 0))
+                    || ((startDate.compareTo(booking.getStartDate()) < 0)
+                    && (endDate.compareTo(booking.getEndDate()) <= 0)
+                    && (endDate.compareTo(booking.getStartDate()) >= 0))
+                    || ((startDate.compareTo(booking.getStartDate()) >= 0)
+                    && (startDate.compareTo(booking.getEndDate()) <= 0)
+                    && (endDate.compareTo(booking.getEndDate()) > 0))
+                    || ((startDate.compareTo(booking.getStartDate()) < 0)
+                    && (endDate.compareTo(booking.getEndDate()) > 0))) {
+                apartmentList.remove(booking.getApartment());
+            }
+        }
+        return apartmentList;
+    }
+
+    public List<ApartmentClassCustom> findFreeApartments(String startDateStr, String endDateStr) {
+        List<Booking> bookingList = findAll();
+        Map<String, Integer> apartmentClassReservedMap = new HashMap<>();
+        Date startDate = toDate(startDateStr);
+        Date endDate = toDate(endDateStr);
+        List<Apartment> apartmentList = checkUnavailableApartment(startDate, endDate);
+        if (apartmentList == null) {
+            return null;
+        }
+        for (Booking booking :
+                bookingList) {
+            if ((startDate.compareTo(booking.getStartDate()) >= 0
+                    && (endDate.compareTo(booking.getEndDate()) <= 0))
+                    || ((startDate.compareTo(booking.getStartDate()) < 0)
+                    && (endDate.compareTo(booking.getEndDate()) <= 0)
+                    && (endDate.compareTo(booking.getStartDate()) >= 0))
+                    || ((startDate.compareTo(booking.getStartDate()) >= 0)
+                    && (startDate.compareTo(booking.getEndDate()) <= 0)
+                    && (endDate.compareTo(booking.getEndDate()) > 0))
+                    || ((startDate.compareTo(booking.getStartDate()) < 0)
+                    && (endDate.compareTo(booking.getEndDate()) > 0))) {
+                if (booking.getApartment() == null) {
+                    if (apartmentClassReservedMap.containsKey(booking.getApartmentClass().getNameClass())) {
+                        Integer tempQuantity = apartmentClassReservedMap.get(booking.getApartmentClass().getNameClass());
+                        apartmentClassReservedMap.replace(booking.getApartmentClass().getNameClass(), ++tempQuantity);
+                    } else {
+                        apartmentClassReservedMap.put(booking.getApartmentClass().getNameClass(), 1);
+                    }
+                } else {
+                    apartmentList.remove(booking.getApartment());
+                }
+            }
+        }
+        return toApartmentClassCustom(apartmentList, apartmentClassReservedMap, startDate, endDate);
+    }
+
+    public void validateBooking(final Booking booking, BindingResult bindingResult) throws MethodArgumentNotValidException {
+        bookingValidator.validate(booking, bindingResult);
+
+        if (bindingResult.hasErrors()) {
+            throw new MethodArgumentNotValidException(null, bindingResult);
+        }
+    }
+
+    public void validateService(final Map<String, Long> values, BindingResult bindingResult) throws MethodArgumentNotValidException {
+        bookingAddServiceValidator.validate(values, bindingResult);
+
+        if (bindingResult.hasErrors()) {
+            throw new MethodArgumentNotValidException(null, bindingResult);
+        }
+    }
+
+    public void validateServices(final List<Map<String, Long>> values, BindingResult bindingResult) throws MethodArgumentNotValidException {
+        for (Map<String, Long> val : values) {
+            this.validateService(val, bindingResult);
+        }
+    }
+
+    private Booking getNotForbiddenBooking(Long bookingId) {
+        Booking booking;
+        if (securityService.isManagerOrAdmin()) {
+            booking = findById(bookingId);
+        } else {
+            booking = findMyById(bookingId);
+        }
+        return booking;
+    }
+
+    private List<Booking> findAll() {
+        return bookingRepository.findAll();
+    }
+
+    private List<Booking> findAll(Map<String, String> allParams) {
+        return bookingRepository.findAll(filterService.fillFilter(allParams, Booking.class));
+    }
+
+    private Booking findById(Long id) {
         return bookingRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException(String.valueOf(id))
         );
     }
 
-    public Booking getById(Long id) {
-        Booking booking = findById(id);
-
-        return correctingDate(booking);
-    }
-
-    public List<Booking> getAllByParams(Map<String, String> allParams) {
-        List<Booking> bookings;
-        if (allParams.size() != 0) {
-            bookings = bookingRepository.findAll(filterService.fillFilter(allParams, Booking.class));
-        } else {
-            bookings = bookingRepository.findAll();
-        }
-        bookings.forEach(this::correctingDate);
-        return bookings;
-    }
-
-    public Booking findOneByParam(Map<String, String> allParams) {
+    private Booking findOneByParam(Map<String, String> allParams) {
         Booking booking = null;
         if (allParams.size() != 0) {
             Optional<Booking> bookingOptional = bookingRepository.findOne(filterService.fillFilter(allParams, Booking.class));
@@ -147,91 +428,40 @@ public class BookingService {
         return booking;
     }
 
-    public Booking update(Booking booking, Long id) {
+    private List<Booking> findMy(Map<String, String> allParams) {
 
-        findById(id);
+        User user = securityService.getCurrentUser();
 
-        ApartmentClass apartmentClass = apartmentClassService.findById(booking.getApartmentClass().getId());
+        allParams.put("user", user.getId().toString());
 
-        User user = userService.findById(booking.getUser().getId());
-
-        booking.setApartmentClass(apartmentClass);
-        booking.setUser(user);
-        booking.setId(id);
-        if (booking.getApartment() != null) {
-            booking.setApartment(validateBookingApartment(booking.getApartment().getId(), booking));
-        } else {
-            throw new EntityNotFoundException("null");
-        }
-
-        Booking showBooking = bookingRepository.save(booking);
-        Timestamp showCreatedDate = entityService.correctingTimestamp(showBooking.getCreatedDate(), MathOperation.PLUS, UnitOfTime.HOUR, 2);
-
-        showBooking.setCreatedDate(showCreatedDate);
-        return showBooking;
+        return findAll(allParams);
     }
 
-    public void deleteById(Long id) {
-        bookingAddServicesShipService.deleteServicesByBookingId(id);
-        Booking delete = bookingRepository.findById(id).orElseThrow(
-                () -> new EntityNotFoundException(String.valueOf(id))
-        );
-        bookingRepository.delete(delete);
+    private List<Booking> findMy() {
+        User user = securityService.getCurrentUser();
+
+        Map<String, String> values = new HashMap<>();
+        values.put("user", user.getId().toString());
+
+        return findAll(values);
     }
 
-    public Booking patch(Long id, Map<String, Object> updates) {
-        Booking booking = findById(id);
+    private Booking findMyById(Long id) {
+        User user = securityService.getCurrentUser();
 
-        if (updates.containsKey("apartment")) {
-            long idApartment = Long.parseLong(updates.get("apartment").toString());
-            Apartment apartment = validateBookingApartment(idApartment, booking);
-            updates.replace("apartment", apartment);
-        }
-        if (updates.containsKey("user")) {
-            Long idUser = Long.valueOf(updates.get("user").toString());
-            User user = userService.findById(idUser);
-            updates.replace("user", user);
-        }
-        booking = bookingRepository.save((Booking) entityService.fillFields(updates, booking));
-        booking.setStartDate(entityService.correctingDate(booking.getStartDate(), MathOperation.PLUS, 1));
-        booking.setEndDate(entityService.correctingDate(booking.getEndDate(), MathOperation.PLUS, 1));
-        return booking;
+        Map<String, String> values = new HashMap<>();
+        values.put("id", id.toString());
+        values.put("user", user.getId().toString());
+
+        return findOneByParam(values);
     }
 
-    public void deleteCreatedBookingById(Long id){
+    private void deleteCreatedBookingById(Long id) {
         bookingRepository.deleteCreatedBookingById(id);
     }
 
-    public int recalculatePrice(Long id) {
-        Booking booking = findById(id);
-        int price = calculateBookingTotalApartmentPrice(booking);
-
-        if (price != booking.getTotalPrice()) {
-            booking.setTotalPrice(calculateBookingTotalApartmentPrice(booking));
-            save(booking);
-        }
-
-        return price;
-    }
-
-    public void cascadeDeleteById(Long id) {
-        if (SecurityContextHolder.getContext().getAuthentication().getAuthorities().iterator().next().toString().equals(UserRole.Administrator.name())
-                || SecurityContextHolder.getContext().getAuthentication().getAuthorities().iterator().next().toString().equals(UserRole.Manager.name())) {
-
-            Booking booking = findById(id);
-
-            bookingAddServicesShipService.deleteByBooking(booking);
-
-            bookingRepository.delete(booking);
-        } else {
-            cascadeDeleteMyById(id);
-        }
-    }
-
-    public void cascadeDeleteMyById(Long id) {
-        String login = SecurityContextHolder.getContext().getAuthentication().getPrincipal().toString();
-
-        User user = userService.findByLogin(login);
+    private void deleteMyById(Long id) {
+        User user = securityService.getCurrentUser();
 
         Map<String, String> values = new HashMap<>();
         values.put("id", id.toString());
@@ -242,7 +472,7 @@ public class BookingService {
         if (booking == null) {
             throw new CustomResponseEntityException("You cannot delete this booking");
         } else {
-            bookingAddServicesShipService.deleteByBooking(booking);
+            bookingAddServicesShipService.deleteServicesByBookingId(id);
 
             bookingRepository.delete(booking);
         }
@@ -263,7 +493,7 @@ public class BookingService {
                 return apartment;
             }
         }
-        throw new EntityNotFoundException(idApartment + ". Apartment is engaged");
+        throw new CustomResponseEntityException("Entity with id = " + idApartment + ". Apartment is engaged", HttpStatus.NOT_FOUND);
     }
 
     private int calculateBookingTotalApartmentPrice(Booking booking) {
@@ -371,74 +601,6 @@ public class BookingService {
         return apartmentList;
     }
 
-
-    public List<Apartment> findFreeApartmentsForApartmentClass(String startDateStr, String endDateStr, Long idApClass) {
-        Date startDate = toDate(startDateStr);
-        Date endDate = toDate(endDateStr);
-        List<Apartment> apartmentList = checkUnavailableApartment(startDate, endDate);
-        if (apartmentList == null) {
-            return null;
-        }
-        apartmentList.removeIf(apartmentTemp -> !apartmentTemp.getApartmentClass().getId().equals(idApClass));
-        Map<String, String> mapApClass = new HashMap<>();
-        mapApClass.put("apartmentClass", idApClass.toString());
-        List<Booking> bookingList = getAllByParams(mapApClass);
-        bookingList.forEach(this::correctingDateMinus);
-        for (Booking booking :
-                bookingList) {
-            if ((startDate.compareTo(booking.getStartDate()) >= 0
-                    && (endDate.compareTo(booking.getEndDate()) <= 0))
-                    || ((startDate.compareTo(booking.getStartDate()) < 0)
-                    && (endDate.compareTo(booking.getEndDate()) <= 0)
-                    && (endDate.compareTo(booking.getStartDate()) >= 0))
-                    || ((startDate.compareTo(booking.getStartDate()) >= 0)
-                    && (startDate.compareTo(booking.getEndDate()) <= 0)
-                    && (endDate.compareTo(booking.getEndDate()) > 0))
-                    || ((startDate.compareTo(booking.getStartDate()) < 0)
-                    && (endDate.compareTo(booking.getEndDate()) > 0))) {
-                apartmentList.remove(booking.getApartment());
-            }
-        }
-        return apartmentList;
-    }
-
-    public List<ApartmentClassCustom> findFreeApartments(String startDateStr, String endDateStr) {
-        List<Booking> bookingList = getAll();
-        bookingList.forEach(this::correctingDateMinus);
-        Map<String, Integer> apartmentClassReservedMap = new HashMap<>();
-        Date startDate = toDate(startDateStr);
-        Date endDate = toDate(endDateStr);
-        List<Apartment> apartmentList = checkUnavailableApartment(startDate, endDate);
-        if (apartmentList == null) {
-            return null;
-        }
-        for (Booking booking :
-                bookingList) {
-            if ((startDate.compareTo(booking.getStartDate()) >= 0
-                    && (endDate.compareTo(booking.getEndDate()) <= 0))
-                    || ((startDate.compareTo(booking.getStartDate()) < 0)
-                    && (endDate.compareTo(booking.getEndDate()) <= 0)
-                    && (endDate.compareTo(booking.getStartDate()) >= 0))
-                    || ((startDate.compareTo(booking.getStartDate()) >= 0)
-                    && (startDate.compareTo(booking.getEndDate()) <= 0)
-                    && (endDate.compareTo(booking.getEndDate()) > 0))
-                    || ((startDate.compareTo(booking.getStartDate()) < 0)
-                    && (endDate.compareTo(booking.getEndDate()) > 0))) {
-                if (booking.getApartment() == null) {
-                    if (apartmentClassReservedMap.containsKey(booking.getApartmentClass().getNameClass())) {
-                        Integer tempQuantity = apartmentClassReservedMap.get(booking.getApartmentClass().getNameClass());
-                        apartmentClassReservedMap.replace(booking.getApartmentClass().getNameClass(), ++tempQuantity);
-                    } else {
-                        apartmentClassReservedMap.put(booking.getApartmentClass().getNameClass(), 1);
-                    }
-                } else {
-                    apartmentList.remove(booking.getApartment());
-                }
-            }
-        }
-        return toApartmentClassCustom(apartmentList, apartmentClassReservedMap, startDate, endDate);
-    }
-
     private Date toDate(String strDate) {
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
         try {
@@ -453,28 +615,6 @@ public class BookingService {
 
     private boolean isValidDates(Date startDate, Date endDate) {
         return endDate == null || startDate == null || endDate.compareTo(startDate) < 0;
-    }
-
-    public void validate(final Booking booking, BindingResult bindingResult) throws MethodArgumentNotValidException {
-        bookingValidator.validate(booking, bindingResult);
-
-        if (bindingResult.hasErrors()) {
-            throw new MethodArgumentNotValidException(null, bindingResult);
-        }
-    }
-
-    public void validate(final Map<String, Long> values, BindingResult bindingResult) throws MethodArgumentNotValidException {
-        bookingAddServiceValidator.validate(values, bindingResult);
-
-        if (bindingResult.hasErrors()) {
-            throw new MethodArgumentNotValidException(null, bindingResult);
-        }
-    }
-
-    public void validate(final List<Map<String, Long>> values, BindingResult bindingResult) throws MethodArgumentNotValidException {
-        for (Map<String, Long> val: values) {
-            this.validate(val, bindingResult);
-        }
     }
 
     private List<ApartmentClassCustom> toApartmentClassCustom(List<Apartment> apartmentList, Map<String, Integer> apartmentClassReservedMap, Date startDate, Date endDate) {
@@ -507,18 +647,19 @@ public class BookingService {
     }
 
     private Booking correctingDate(Booking booking) {
-        Date startDate = entityService.correctingDate(booking.getStartDate(), MathOperation.PLUS, 1);
-        booking.setStartDate(startDate);
+        if (booking != null) {
+            Date startDate = entityService.correctingDate(booking.getStartDate(), MathOperation.PLUS, 1);
+            booking.setStartDate(startDate);
 
-        Date endDate = entityService.correctingDate(booking.getEndDate(), MathOperation.PLUS, 1);
-        booking.setEndDate(endDate);
+            Date endDate = entityService.correctingDate(booking.getEndDate(), MathOperation.PLUS, 1);
+            booking.setEndDate(endDate);
 
-        Timestamp createdDate = entityService.correctingTimestamp(booking.getCreatedDate(), MathOperation.PLUS, UnitOfTime.HOUR, +2);
-        booking.setCreatedDate(createdDate);
+            Timestamp createdDate = entityService.correctingTimestamp(booking.getCreatedDate(), MathOperation.PLUS, UnitOfTime.HOUR, +2);
+            booking.setCreatedDate(createdDate);
+        }
 
         return booking;
     }
-
 
     private void correctingDateMinus(Booking booking) {
         Date startDate = entityService.correctingDate(booking.getStartDate(), MathOperation.MINUS, 1);
@@ -532,57 +673,17 @@ public class BookingService {
 
     }
 
+    private Thread getThreadToDeleteCreatedBooking(Long id) {
+        Runnable task = () -> {
+            try {
+                TimeUnit.MINUTES.sleep(15);
+                deleteCreatedBookingById(id);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        };
 
-public Long addService(Long id, Map<String, Long> bookingAddServices) {
-        Booking booking = findById(id);
-        BookingAddServices bookingAddService = bookingAddServicesService.findById(bookingAddServices.get("id"));
-        int countServices = bookingAddServices.get("countServices").intValue();
-        BookingAddServicesShip bookingAddServicesShip = new BookingAddServicesShip();
-        bookingAddServicesShip.setBooking(booking);
-        bookingAddServicesShip.setBookingAddServices(bookingAddService);
-        bookingAddServicesShip.setCountServices(countServices);
-        Long bookingAddServicesId = bookingAddServicesShipService.save(bookingAddServicesShip).getId();
-        booking.setTotalPrice(booking.getTotalPrice() + calculateBookingTotalServicesPrice(booking));
-        save(booking);
-
-        return bookingAddServicesId;
-    }
-
-    public List<Long> addService (Long id, List<Map<String, Long>> services){
-        List<Long> bookingAddServicesIds = new LinkedList<>();
-        for (Map<String, Long> service: services) {
-            bookingAddServicesIds.add(this.addService(id, service));
-        }
-        return bookingAddServicesIds;
-    }
-
-    public List<BookingAddServicesCustom> getServices(Long id) {
-        Map<String, String> params = new HashMap<>();
-        params.put("booking", id.toString());
-        List<BookingAddServicesCustom> bookingAddServiceCustoms = new ArrayList<>();
-        List<BookingAddServicesShip> bookingAddServicesShips = bookingAddServicesShipService.getAllByParams(params);
-        bookingAddServicesShips.forEach(bookingAddServicesShip -> {
-            BookingAddServicesCustom bookingService = new BookingAddServicesCustom();
-            bookingService.setBookingAddServices(bookingAddServicesShip.getBookingAddServices());
-            bookingService.setCountServices(bookingAddServicesShip.getCountServices());
-            bookingAddServiceCustoms.add(bookingService);
-        });
-
-        return bookingAddServiceCustoms;
-    }
-
-    public void deleteService(Long id, Long serviceId) throws Throwable {
-        Map<String, String> values = new HashMap<>();
-        values.put("booking", id.toString());
-        values.put("bookingAddServices", serviceId.toString());
-
-        BookingAddServicesShip bookingAddServicesShip = bookingAddServicesShipService.findOneByFilter(values);
-
-        bookingAddServicesShipService.deleteById(bookingAddServicesShip.getId());
-
-        Booking booking = findById(id);
-        booking.setTotalPrice(calculateBookingTotalApartmentPrice(booking));
-        save(booking);
+        return new Thread(task);
     }
 
 }

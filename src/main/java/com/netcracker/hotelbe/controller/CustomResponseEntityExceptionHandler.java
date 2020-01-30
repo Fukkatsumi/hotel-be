@@ -75,6 +75,7 @@ public class CustomResponseEntityExceptionHandler extends ResponseEntityExceptio
     @ExceptionHandler(value = {CustomResponseEntityException.class})
     protected ResponseEntity CustomResponseEntityException(CustomResponseEntityException e){
         final String message = e.getMessage();
+        e.printStackTrace();
         LOGGER.warn(message);
 
         ResponseEntity responseEntity;

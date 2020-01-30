@@ -236,7 +236,7 @@ public class BookingService {
     }
 
     public List<BookingAddServicesCustom> getServices(Long bookingId) {
-        Booking booking = getNotForbiddenBooking(bookingId);
+        Booking booking = bookingRepository.getOne(bookingId);
 
         if (booking != null) {
             Map<String, String> params = new HashMap<>();

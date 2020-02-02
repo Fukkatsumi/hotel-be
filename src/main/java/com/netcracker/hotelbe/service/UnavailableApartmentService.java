@@ -1,6 +1,7 @@
 package com.netcracker.hotelbe.service;
 
 import com.netcracker.hotelbe.entity.Apartment;
+import com.netcracker.hotelbe.entity.ApartmentPrice;
 import com.netcracker.hotelbe.entity.UnavailableApartment;
 import com.netcracker.hotelbe.repository.UnavailableApartmentRepository;
 import com.netcracker.hotelbe.service.filter.FilterService;
@@ -35,6 +36,10 @@ public class UnavailableApartmentService {
 
     @Autowired
     private EntityService entityService;
+
+    public List<UnavailableApartment> findAll(Map<String, String> allParams){
+        return unavailableApartmentRepository.findAll(filterService.fillFilter(allParams, UnavailableApartment.class));
+    }
 
     public List<UnavailableApartment> getAll() {
         List<UnavailableApartment> unavailableApartments =  unavailableApartmentRepository.findAll();

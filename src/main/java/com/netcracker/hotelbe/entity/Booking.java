@@ -3,7 +3,7 @@ package com.netcracker.hotelbe.entity;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.netcracker.hotelbe.entity.enums.BookingStatus;
 import com.netcracker.hotelbe.utils.PostgreSQLEnumType;
-import lombok.Data;
+import lombok.*;
 import org.hibernate.annotations.Type;
 import org.hibernate.annotations.TypeDef;
 
@@ -14,6 +14,9 @@ import java.io.Serializable;
 import java.sql.Date;
 import java.sql.Timestamp;
 
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @Data
 @Entity
 @Table(name = "Bookings",

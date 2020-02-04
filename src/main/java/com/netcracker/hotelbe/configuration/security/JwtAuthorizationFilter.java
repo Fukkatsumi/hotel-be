@@ -1,6 +1,7 @@
 package com.netcracker.hotelbe.configuration.security;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jws;
 import io.jsonwebtoken.Jwts;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -44,8 +45,8 @@ public class JwtAuthorizationFilter extends BasicAuthenticationFilter {
             byte[] signingKey = SecurityConstants.JWT_SECRET.getBytes();
 
             Jws<Claims> parsedToken = Jwts.parser()
-                    .setSigningKey(signingKey)
-                    .parseClaimsJws(token.replace(SecurityConstants.TOKEN_PREFIX, ""));
+                .setSigningKey(signingKey)
+                .parseClaimsJws(token.replace(SecurityConstants.TOKEN_PREFIX, ""));
 
             String username = parsedToken.getBody().getSubject();
 

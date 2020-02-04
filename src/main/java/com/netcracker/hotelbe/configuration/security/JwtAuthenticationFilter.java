@@ -64,10 +64,9 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
 
         response.setContentType("application/json");
         response.setHeader("Access-Control-Allow-Origin", "*");
-        PrintWriter responseWriter =response.getWriter();
+        PrintWriter responseWriter = response.getWriter();
         responseWriter.write("{ \"token\": \"" + token + "\"}");
         responseWriter.flush();
     }
-
 
 }

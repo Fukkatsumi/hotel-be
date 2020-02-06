@@ -44,6 +44,14 @@ public class EmailService {
         send(email, user.getEmail());
     }
 
+    public void sendCredentialToUser(User user) {
+        Email email = new Email();
+        email.setSubject("Hotel: your credential");
+        email.setText(String.format(USER_CREDENTIAL, user.getFirstname(), user.getLogin(), user.getPassword()));
+
+        send(email, user.getEmail());
+    }
+
     public boolean sendBookingInformationToUser(Booking booking) {
         User user = booking.getUser();
         if (user != null) {

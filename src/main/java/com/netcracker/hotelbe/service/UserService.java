@@ -22,6 +22,9 @@ public class UserService {
     @Autowired
     private EntityService entityService;
 
+    @Autowired
+    private EmailService emailService;
+
     public List<User> findAll() {
         return userRepository.findAll();
     }
@@ -62,6 +65,8 @@ public class UserService {
     }
 
     public User save(User user) {
+        emailService.sendCredentialToUser(user);
+
         return userRepository.save(user);
     }
 

@@ -67,6 +67,9 @@ public class BookingService {
     private SecurityService securityService;
 
     @Autowired
+    private EmailService emailService;
+
+    @Autowired
     @Qualifier("bookingValidator")
     private Validator bookingValidator;
 
@@ -203,6 +206,10 @@ public class BookingService {
             }
         }
 
+        if (booking.getUser() != null && updates.get("bookingStatus").equals("Confirmed")) {
+            emailService.sendBookingInformationToUser(booking);
+        }
+
         return booking;
     }
 
@@ -222,7 +229,7 @@ public class BookingService {
             Long bookingAddServicesId = bookingAddServicesShipService.save(bookingAddServicesShip).getId();
             booking.setTotalPrice(booking.getTotalPrice() + bookingAddService.getPrice() * countServices);
 
-            save(booking);
+            bookingRepository.save(booking);
             return bookingAddServicesId;
         } else {
             throw new CustomResponseEntityException("You cannot add a service to this booking", HttpStatus.FORBIDDEN);
@@ -272,7 +279,8 @@ public class BookingService {
             bookingAddServicesShipService.deleteById(bookingAddServicesShip.getId());
 
             booking.setTotalPrice(calculateBookingTotalPrice(booking));
-            save(booking);
+
+            bookingRepository.save(booking);
         } else {
             throw new CustomResponseEntityException("You cannot delete service for this booking", HttpStatus.FORBIDDEN);
         }
@@ -286,7 +294,8 @@ public class BookingService {
 
             if (price != booking.getTotalPrice()) {
                 booking.setTotalPrice(calculateBookingTotalPrice(booking));
-                save(booking);
+
+                bookingRepository.save(booking);
             }
 
             return price;

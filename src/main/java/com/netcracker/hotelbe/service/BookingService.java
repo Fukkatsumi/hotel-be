@@ -229,7 +229,6 @@ public class BookingService {
             Long bookingAddServicesId = bookingAddServicesShipService.save(bookingAddServicesShip).getId();
             booking.setTotalPrice(booking.getTotalPrice() + bookingAddService.getPrice() * countServices);
 
-//            save(booking);
             bookingRepository.save(booking);
             return bookingAddServicesId;
         } else {
@@ -280,7 +279,7 @@ public class BookingService {
             bookingAddServicesShipService.deleteById(bookingAddServicesShip.getId());
 
             booking.setTotalPrice(calculateBookingTotalPrice(booking));
-//            save(booking);
+
             bookingRepository.save(booking);
         } else {
             throw new CustomResponseEntityException("You cannot delete service for this booking", HttpStatus.FORBIDDEN);
@@ -295,7 +294,7 @@ public class BookingService {
 
             if (price != booking.getTotalPrice()) {
                 booking.setTotalPrice(calculateBookingTotalPrice(booking));
-//                save(booking);
+
                 bookingRepository.save(booking);
             }
 

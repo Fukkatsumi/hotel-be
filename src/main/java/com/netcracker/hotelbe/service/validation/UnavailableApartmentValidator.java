@@ -48,12 +48,12 @@ public class UnavailableApartmentValidator implements Validator {
         Date currentTime = new Date(System.currentTimeMillis() - 120000);
 
         if (unavailableApartment.getStartDate().compareTo(currentTime) < 0) {
-            errors.rejectValue("startDate","", "Start date cant be before current date ");
+            errors.rejectValue("startDate", "", "Start date cant be before current date ");
         }
         if (unavailableApartment.getEndDate().compareTo(currentTime) < 0) {
-            errors.rejectValue("endDate","", "End date cant be before current date ");
+            errors.rejectValue("endDate", "", "End date cant be before current date ");
         }
-        if (unavailableApartment.getEndDate().compareTo(unavailableApartment.getStartDate()) < 0){
+        if (unavailableApartment.getEndDate().compareTo(unavailableApartment.getStartDate()) < 0) {
             errors.rejectValue("endDate", "", "End date cant be before start date");
         }
 
@@ -80,7 +80,8 @@ public class UnavailableApartmentValidator implements Validator {
             }
             if (localStartPeriod.compareTo(start) <= 0
                     && localEndPeriod.compareTo(end) >= 0) {
-                errors.rejectValue("startDate", "", "existing (id=" + unavailableApartmentTemp.getId() + ") price between startPeriod and endDate");
+                errors.rejectValue("startDate", "", "existing (id=" + unavailableApartmentTemp.getId() +
+                        ") unavailable apartment between startPeriod and endDate");
                 break;
             }
         }

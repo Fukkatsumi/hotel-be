@@ -54,7 +54,7 @@ public class UserController {
     @PostMapping
     public ResponseEntity<Long> addUser(@RequestBody @Valid User user) {
         try {
-            return new ResponseEntity<>(userService.save(user).getId(), HttpStatus.OK);
+            return new ResponseEntity<>(userService.registrate(user).getId(), HttpStatus.OK);
         } catch (RuntimeException e) {
             return RuntimeExceptionHandler.handlePSQLException(e);
         }
@@ -81,5 +81,12 @@ public class UserController {
     public ResponseEntity<User> patchById(@PathVariable("id") final Long id, @RequestBody Map<String, Object> updates) {
         return new ResponseEntity<>(userService.patch(id, updates), HttpStatus.OK);
     }
+
+    @GetMapping("/cypher")
+    public String cypher(){
+        userService.cypher();
+        return "OK";
+    }
+
 
 }

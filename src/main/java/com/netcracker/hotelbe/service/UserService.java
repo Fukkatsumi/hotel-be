@@ -4,6 +4,7 @@ import com.netcracker.hotelbe.entity.User;
 import com.netcracker.hotelbe.repository.UserRepository;
 import com.netcracker.hotelbe.service.filter.FilterService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
@@ -22,6 +23,9 @@ public class UserService {
     @Autowired
     private EntityService entityService;
 
+    @Autowired
+    private PasswordEncoder passwordEncoder;
+  
     @Autowired
     private EmailService emailService;
 
@@ -70,13 +74,27 @@ public class UserService {
         return userRepository.save(user);
     }
 
+    public User registrate(User user){
+        String encodedPassword = passwordEncoder.encode(user.getPassword());
+        user.setPassword(encodedPassword);
+        return save(user);
+    }
+
     public User update(User user, Long id) {
         userRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException(String.valueOf(id))
         );
 
         user.setId(id);
-
         return userRepository.save(user);
+    }
+
+    public void cypher(){
+        List<User> us = userRepository.findAll();
+        for (User u: us) {
+            u.setPassword(passwordEncoder.encode(u.getPassword()));
+            save(u);
+        }
+
     }
 }

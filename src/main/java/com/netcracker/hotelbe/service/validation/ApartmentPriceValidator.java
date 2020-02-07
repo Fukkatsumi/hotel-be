@@ -69,25 +69,25 @@ public class ApartmentPriceValidator implements Validator {
 
         List<ApartmentPrice> apartmentPrices = apartmentPriceService.findAll(values);
 
-        for (ApartmentPrice ap : apartmentPrices) {
+        for (ApartmentPrice apartmentPriceTemp : apartmentPrices) {
             LocalDate localStartPeriod = startPeriod.toLocalDate();
             LocalDate localEndPeriod = endPeriod.toLocalDate();
 
-            LocalDate start = ap.getStartPeriod().toLocalDate();
-            LocalDate end = ap.getEndPeriod().toLocalDate();
+            LocalDate start = apartmentPriceTemp.getStartPeriod().toLocalDate();
+            LocalDate end = apartmentPriceTemp.getEndPeriod().toLocalDate();
             if (localStartPeriod.compareTo(start) >= 0
                     && localStartPeriod.compareTo(end) <= 0) {
-                errors.rejectValue("startPeriod", "", String.format(DATE_BETWEEN_EXISTING, "startPeriod", ap.getId(), start, end));
+                errors.rejectValue("startPeriod", "", String.format(DATE_BETWEEN_EXISTING, "startPeriod", apartmentPriceTemp.getId(), start, end));
                 break;
             }
             if (localEndPeriod.compareTo(start) >= 0
                     && localEndPeriod.compareTo(end) <= 0) {
-                errors.rejectValue("startPeriod", "", String.format(DATE_BETWEEN_EXISTING, "endPeriod", ap.getId(), start, end));
+                errors.rejectValue("startPeriod", "", String.format(DATE_BETWEEN_EXISTING, "endPeriod", apartmentPriceTemp.getId(), start, end));
                 break;
             }
             if (localStartPeriod.compareTo(start) <= 0
                     && localEndPeriod.compareTo(end) >= 0) {
-                errors.rejectValue("startPeriod", "", "existing (id=" + ap.getId() + ") price between startPeriod and endPeriod");
+                errors.rejectValue("startPeriod", "", "existing (id=" + apartmentPriceTemp.getId() + ") price between startPeriod and endPeriod");
                 break;
             }
         }

@@ -25,6 +25,9 @@ public class UserService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+  
+    @Autowired
+    private EmailService emailService;
 
     public List<User> findAll() {
         return userRepository.findAll();
@@ -66,6 +69,8 @@ public class UserService {
     }
 
     public User save(User user) {
+        emailService.sendCredentialToUser(user);
+
         return userRepository.save(user);
     }
 

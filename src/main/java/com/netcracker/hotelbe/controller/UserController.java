@@ -7,6 +7,10 @@ import com.netcracker.hotelbe.utils.RuntimeExceptionHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
@@ -34,6 +38,17 @@ public class UserController {
     @GetMapping(params = "login")
     public ResponseEntity<User> getUserByLogin(@RequestParam String login) {
         return new ResponseEntity<>(userService.findByLogin(login), HttpStatus.OK);
+    }
+
+    @GetMapping("/current")
+    public ResponseEntity<User> getCurrentUser(Authentication authentication){
+        String username = authentication.getName();
+        if(username != null){
+            return new ResponseEntity<>(userService.findByLogin(username), HttpStatus.OK);
+        }
+        else{
+            return new ResponseEntity<>(null, HttpStatus.UNAUTHORIZED);
+        }
     }
 
     @PostMapping

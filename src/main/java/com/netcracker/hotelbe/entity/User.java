@@ -2,6 +2,7 @@ package com.netcracker.hotelbe.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.netcracker.hotelbe.entity.enums.UserRole;
 import lombok.Data;
 import lombok.ToString;
@@ -32,6 +33,7 @@ public class User {
 
     @Column(name = "password")
     @NotNull
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String password;
 
     @Column(name = "user_role")

@@ -24,6 +24,9 @@ public class StaffService {
     private UserService userService;
 
     @Autowired
+    private EmailService emailService;
+
+    @Autowired
     private FilterService filterService;
 
     @Autowired
@@ -48,6 +51,8 @@ public class StaffService {
     }
 
     public Staff save(Staff staff) {
+        emailService.sendCredentialToUser(staff.getUser());
+
         return staffRepository.save(staff);
     }
 

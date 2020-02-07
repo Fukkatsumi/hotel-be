@@ -4,6 +4,7 @@ package com.netcracker.hotelbe.controller;
 
 import com.google.common.base.Throwables;
 import com.netcracker.hotelbe.exception.CustomResponseEntityException;
+import io.jsonwebtoken.ExpiredJwtException;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.postgresql.util.PSQLException;

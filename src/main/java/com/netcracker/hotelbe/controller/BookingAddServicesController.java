@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("bookingAddServices")
@@ -20,8 +21,8 @@ public class BookingAddServicesController {
     BookingAddServicesService bookingAddServicesService;
 
     @GetMapping
-    public ResponseEntity<List<BookingAddServices>> getAllBookingAddServices() {
-        return new ResponseEntity<>(bookingAddServicesService.findAll(), HttpStatus.OK);
+    public ResponseEntity<List<BookingAddServices>> getAllBookingAddServices(@RequestParam Map<String,String> allParams) {
+        return new ResponseEntity<>(bookingAddServicesService.getAllByParams(allParams), HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
@@ -41,9 +42,8 @@ public class BookingAddServicesController {
 
     @PutMapping("/{id}")
     public ResponseEntity<BookingAddServices> updateBookingAddService(@RequestBody @Valid BookingAddServices bookingAddServices, @PathVariable Long id) {
-        bookingAddServices.setId(id);
         try {
-            return new ResponseEntity<>(bookingAddServicesService.save(bookingAddServices), HttpStatus.OK);
+            return new ResponseEntity<>(bookingAddServicesService.update(bookingAddServices, id), HttpStatus.OK);
         } catch (RuntimeException e) {
             return RuntimeExceptionHandler.handlePSQLException(e);
         }
@@ -53,6 +53,11 @@ public class BookingAddServicesController {
     public ResponseEntity deleteBookingAddService(@PathVariable Long id) {
         bookingAddServicesService.deleteById(id);
         return new ResponseEntity(HttpStatus.OK);
+    }
+
+    @PatchMapping("/{id}")
+    public  ResponseEntity<BookingAddServices> patchById(@PathVariable("id") final Long id, @RequestBody Map<String, Object> updates) {
+        return new ResponseEntity<>(bookingAddServicesService.patch(id, updates), HttpStatus.OK);
     }
 
 }

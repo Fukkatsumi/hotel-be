@@ -14,6 +14,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("tasks")
@@ -27,8 +28,8 @@ public class TaskController {
     private Validator taskValidator;
 
     @GetMapping
-    public ResponseEntity<List<Task>> getAllTasks() {
-        return new ResponseEntity<>(taskService.findAll(), HttpStatus.OK);
+    public ResponseEntity<List<Task>> getAllTasks(@RequestParam Map<String,String> allParams) {
+        return new ResponseEntity<>(taskService.getAllByParams(allParams), HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
@@ -51,13 +52,13 @@ public class TaskController {
 
     @PutMapping("/{id}")
     public ResponseEntity<Task> updateTaskById(@RequestBody @Valid Task task, @PathVariable("id") Long id, BindingResult bindingResult) throws MethodArgumentNotValidException {
-        task.setId(id);
+
         taskValidator.validate(task, bindingResult);
         if (bindingResult.hasErrors()) {
             throw new MethodArgumentNotValidException(null, bindingResult);
         }
         try {
-            return new ResponseEntity<>(taskService.save(task), HttpStatus.OK);
+            return new ResponseEntity<>(taskService.update(task, id), HttpStatus.OK);
         } catch (RuntimeException e) {
             return RuntimeExceptionHandler.handlePSQLException(e);
         }
@@ -67,6 +68,11 @@ public class TaskController {
     private ResponseEntity deleteTaskById(@PathVariable Long id) {
         taskService.deleteById(id);
         return new ResponseEntity(HttpStatus.OK);
+    }
+
+    @PatchMapping("/{id}")
+    public  ResponseEntity<Task> patchById(@PathVariable("id") final Long id, @RequestBody Map<String, Object> updates) {
+        return new ResponseEntity<>(taskService.patch(id, updates), HttpStatus.OK);
     }
 
 }

@@ -5,8 +5,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 
 import javax.persistence.*;
-import javax.validation.constraints.NotNull;
-import java.sql.Timestamp;
+import java.sql.Date;
 
 @Data
 @Entity
@@ -21,17 +20,17 @@ public class UnavailableApartment {
     private Long id;
 
     @Column(name = "start_date")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private Timestamp startDate;
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private Date startDate;
 
     @Column(name = "end_date")
-    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
-    private Timestamp endDate;
+    @JsonFormat(pattern = "yyyy-MM-dd")
+    private Date endDate;
 
     @Column(name = "cause_description")
     private String causeDescription;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne
     @JoinColumn(name = "id_apartment")
     private Apartment apartment;
 

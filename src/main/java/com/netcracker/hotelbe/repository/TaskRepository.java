@@ -4,6 +4,7 @@ import com.netcracker.hotelbe.entity.Staff;
 import com.netcracker.hotelbe.entity.Task;
 import com.netcracker.hotelbe.entity.enums.TaskStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -14,7 +15,7 @@ import java.sql.Timestamp;
 import java.util.List;
 
 @Repository
-public interface TaskRepository extends JpaRepository<Task, Long> {
+public interface TaskRepository extends JpaRepository<Task, Long>, JpaSpecificationExecutor<Task> {
 
     @Transactional
     @Modifying
@@ -25,6 +26,10 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
     @Modifying
     @Query("UPDATE Task t SET t.executor = :executor WHERE t.id = :task_id")
     void setExecutorByTaskId(@Param("task_id") Long id, @Param("executor") Staff executor);
+
+    @Query(value = "SELECT t.id, t.start_date, t.end_date, t.accept_date, t.complete_date, t.description, t.task_status, t.apartment_id, t.executor_id, t.creator_id FROM tasks t",
+            nativeQuery = true)
+    List<Task> findAllNative();
 
     List<Task> getAllByExecutor(Staff staff);
 

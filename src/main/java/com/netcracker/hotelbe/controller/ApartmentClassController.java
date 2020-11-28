@@ -1,7 +1,7 @@
 package com.netcracker.hotelbe.controller;
 
-
 import com.netcracker.hotelbe.entity.ApartmentClass;
+import com.netcracker.hotelbe.entity.ApartmentPrice;
 import com.netcracker.hotelbe.service.ApartmentClassService;
 import com.netcracker.hotelbe.utils.RuntimeExceptionHandler;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,8 +12,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.sql.Timestamp;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("apartmentsClasses")
@@ -22,9 +22,9 @@ public class ApartmentClassController {
     @Autowired
     private ApartmentClassService apartmentClassService;
 
-    @GetMapping
-    public ResponseEntity<List<ApartmentClass>> getAll() {
-        return new ResponseEntity<>(apartmentClassService.findAll(), HttpStatus.OK);
+    @GetMapping()
+    public ResponseEntity<List<ApartmentClass>> getAll(@RequestParam Map<String, String> allParams) {
+        return new ResponseEntity<>(apartmentClassService.getAllByParams(allParams), HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
@@ -64,5 +64,15 @@ public class ApartmentClassController {
         }
 
         return new ResponseEntity(HttpStatus.OK);
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<ApartmentClass> patchById(@PathVariable("id") final Long id, @RequestBody Map<String, Object> updates) {
+        return new ResponseEntity<>(apartmentClassService.patch(id, updates), HttpStatus.OK);
+    }
+
+    @GetMapping("/{id}/prices")
+    public ResponseEntity<List<ApartmentPrice>> getPrices(@PathVariable("id") final Long id) {
+        return new ResponseEntity<>(apartmentClassService.getPrices(id), HttpStatus.OK);
     }
 }

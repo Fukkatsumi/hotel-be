@@ -2,6 +2,7 @@ package com.netcracker.hotelbe.utils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Throwables;
+import org.apache.log4j.Level;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.aspectj.lang.JoinPoint;
@@ -21,24 +22,38 @@ public class LoggingManager {
 
     private static final Logger LOG = LogManager.getLogger(LoggingManager.class);
 
-    @Pointcut("execution(* com.netcracker.hotelbe.*.*.*(..) )")
+    @Pointcut("execution(* com.netcracker.hotelbe.*.*(..) )")
     public void allPointcut() {
 
     }
 
-    @Around("allPointcut()")
+    @Around("bean(*Controller)")
     public Object logControllerMethods(final ProceedingJoinPoint pjp) throws Throwable {
         String methodName = pjp.getSignature().getName();
         String className = pjp.getTarget().getClass().toString();
         Object object = pjp.proceed();
 
         if (className.contains("com.netcracker.hotelbe.controller")) {
-            LOG.info(className + " : " + methodName + "() " + "Response : "
-                    + new ObjectMapper().writeValueAsString(object));
+            if (LOG.isInfoEnabled()) {
+                LOG.info(className + " : " + methodName + "() " + "Response : "
+                        + new ObjectMapper().writeValueAsString(object));
+            }
         }
+
+        return object;
+    }
+
+    @Around("bean(*Service)")
+    public Object logServiceMethods(final ProceedingJoinPoint pjp) throws Throwable {
+        String methodName = pjp.getSignature().getName();
+        String className = pjp.getTarget().getClass().toString();
+        Object object = pjp.proceed();
+
         if (className.contains("com.netcracker.hotelbe.service")) {
-            LOG.trace(className + " : " + methodName + "() " + "Return : "
-                    + new ObjectMapper().writeValueAsString(object));
+            if (LOG.isTraceEnabled()) {
+                LOG.trace(className + " : " + methodName + "() " + "Return : "
+                        + new ObjectMapper().writeValueAsString(object));
+            }
         }
 
         return object;
@@ -59,9 +74,10 @@ public class LoggingManager {
         for (int i = 0; i < args.length; i++) {
             arguments.append(i + 1).append(": ").append(args[i]).append(";\n\t");
         }
-
-        LOG.error(className + " : " + methodName + "() " + " arguments:\n\t"
-                + arguments, e);
+        if (LOG.getLevel() == Level.ERROR) {
+            LOG.error(className + " : " + methodName + "() " + " arguments:\n\t"
+                    + arguments, e);
+        }
     }
 
 }

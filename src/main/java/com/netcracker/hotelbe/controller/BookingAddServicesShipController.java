@@ -1,6 +1,5 @@
 package com.netcracker.hotelbe.controller;
 
-import com.netcracker.hotelbe.entity.BookingAddServices;
 import com.netcracker.hotelbe.entity.BookingAddServicesShip;
 import com.netcracker.hotelbe.service.BookingAddServicesShipService;
 import com.netcracker.hotelbe.utils.RuntimeExceptionHandler;
@@ -11,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("bookingAddServicesShip")
@@ -20,8 +20,8 @@ public class BookingAddServicesShipController {
     BookingAddServicesShipService bookingAddServicesShipService;
 
     @GetMapping
-    public ResponseEntity<List<BookingAddServicesShip>> getAllBookingAddServicesShip() {
-        return new ResponseEntity<>(bookingAddServicesShipService.findAll(), HttpStatus.OK);
+    public ResponseEntity<List<BookingAddServicesShip>> getAllBookingAddServicesShip(@RequestParam Map<String,String> allParams) {
+        return new ResponseEntity<>(bookingAddServicesShipService.getAllByParams(allParams), HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
@@ -41,9 +41,8 @@ public class BookingAddServicesShipController {
 
     @PutMapping("/{id}")
     public ResponseEntity<BookingAddServicesShip> updateBookingAddServiceShip(@RequestBody @Valid BookingAddServicesShip bookingAddServicesShip, @PathVariable Long id) {
-        bookingAddServicesShip.setId(id);
         try {
-            return new ResponseEntity<>(bookingAddServicesShipService.save(bookingAddServicesShip), HttpStatus.OK);
+            return new ResponseEntity<>(bookingAddServicesShipService.update(bookingAddServicesShip, id), HttpStatus.OK);
         } catch (RuntimeException e) {
             return RuntimeExceptionHandler.handlePSQLException(e);
         }
@@ -55,4 +54,8 @@ public class BookingAddServicesShipController {
         return new ResponseEntity(HttpStatus.OK);
     }
 
+    @PatchMapping("/{id}")
+    public  ResponseEntity<BookingAddServicesShip> patchById(@PathVariable("id") final Long id, @RequestBody Map<String, Object> updates) {
+        return new ResponseEntity<>(bookingAddServicesShipService.patch(id, updates), HttpStatus.OK);
+    }
 }

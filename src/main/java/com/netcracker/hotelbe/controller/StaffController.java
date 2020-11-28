@@ -3,7 +3,6 @@ package com.netcracker.hotelbe.controller;
 
 import com.netcracker.hotelbe.entity.Staff;
 import com.netcracker.hotelbe.service.StaffService;
-import com.netcracker.hotelbe.service.UserService;
 import com.netcracker.hotelbe.utils.RuntimeExceptionHandler;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -12,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("staff")
@@ -19,13 +19,10 @@ public class StaffController {
 
     @Autowired
     private StaffService staffService;
-    @Autowired
-    private UserService userService;
-
 
     @GetMapping
-    public ResponseEntity<List<Staff>> getAllStaff() {
-        return new ResponseEntity<>(staffService.findAll(), HttpStatus.OK);
+    public ResponseEntity<List<Staff>> getAllStaff(@RequestParam Map<String,String> allParams) {
+        return new ResponseEntity<>(staffService.getAllByParams(allParams), HttpStatus.OK);
     }
 
     @GetMapping("/{id}")
@@ -40,15 +37,14 @@ public class StaffController {
         } catch (RuntimeException e) {
             return RuntimeExceptionHandler.handlePSQLException(e);
         }
-    }
 
+
+    }
 
     @PutMapping("/{id}")
     public ResponseEntity<Long> updateStaff(@RequestBody @Valid Staff staff, @PathVariable("id") Long id) {
-        staff.setId(id);
-        staff.setUser(userService.findById(id));
         try {
-            return new ResponseEntity<>(staffService.save(staff).getId(), HttpStatus.OK);
+            return new ResponseEntity<>(staffService.update(staff, id).getId(), HttpStatus.OK);
         } catch (RuntimeException e) {
             return RuntimeExceptionHandler.handlePSQLException(e);
         }
@@ -59,4 +55,10 @@ public class StaffController {
         staffService.deleteById(id);
         return new ResponseEntity(HttpStatus.OK);
     }
+
+    @PatchMapping("/{id}")
+    public  ResponseEntity<Staff> patchById(@PathVariable("id") final Long id, @RequestBody Map<String, Object> updates) {
+        return new ResponseEntity<>(staffService.patch(id, updates), HttpStatus.OK);
+    }
+
 }

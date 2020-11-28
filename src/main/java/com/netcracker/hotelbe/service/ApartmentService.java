@@ -3,11 +3,13 @@ package com.netcracker.hotelbe.service;
 import com.netcracker.hotelbe.entity.Apartment;
 import com.netcracker.hotelbe.entity.ApartmentClass;
 import com.netcracker.hotelbe.repository.ApartmentRepository;
+import com.netcracker.hotelbe.service.filter.FilterService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.EntityNotFoundException;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class ApartmentService {
@@ -18,8 +20,22 @@ public class ApartmentService {
     @Autowired
     private ApartmentClassService apartmentClassService;
 
+    @Autowired
+    private FilterService filterService;
+
+    @Autowired
+    private EntityService entityService;
+
     public List<Apartment> getAll() {
         return apartmentRepository.findAll();
+    }
+
+    public List<Apartment> getAllByParams(Map<String, String> allParams) {
+        if (allParams.size() != 0) {
+            return apartmentRepository.findAll(filterService.fillFilter(allParams, Apartment.class));
+        } else {
+            return apartmentRepository.findAllNative();
+        }
     }
 
     public Apartment save(Apartment apartment) {
@@ -35,20 +51,17 @@ public class ApartmentService {
         );
     }
 
-    public Apartment update(final Apartment apartment, final Long id) {
-        final ApartmentClass apartmentClass = apartmentClassService.findById(apartment.getApartmentClass().getId());
-
-        Apartment update = apartmentRepository.findById(id).orElseThrow(
+    public Apartment update(Apartment apartment, final Long id) {
+        apartmentRepository.findById(id).orElseThrow(
                 () -> new EntityNotFoundException(String.valueOf(id))
         );
 
-        update.setRoomNumber(apartment.getRoomNumber());
-        update.setPhoto(apartment.getPhoto());
-        update.setDescription(apartment.getDescription());
-        update.setStatus(apartment.getStatus());
-        update.setApartmentClass(apartmentClass);
+        final ApartmentClass apartmentClass = apartmentClassService.findById(apartment.getApartmentClass().getId());
 
-        return apartmentRepository.save(update);
+        apartment.setApartmentClass(apartmentClass);
+        apartment.setId(id);
+
+        return apartmentRepository.save(apartment);
     }
 
     public void deleteById(final Long id) {
@@ -58,5 +71,13 @@ public class ApartmentService {
         );
 
         apartmentRepository.delete(delete);
+    }
+
+    public Apartment patch(Long id, Map<String, Object> updates) {
+        Apartment apartment = apartmentRepository.findById(id).orElseThrow(
+                () -> new EntityNotFoundException(String.valueOf(id))
+        );
+
+        return apartmentRepository.save((Apartment) entityService.fillFields(updates, apartment));
     }
 }
